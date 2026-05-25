@@ -1,0 +1,26 @@
+{
+  "name": "adapt",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": { "adapt": "bin/adapt.mjs" },
+  "scripts": {
+    "adapt": "tsx src/cli/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "schemas": "tsx src/schemas/export.ts"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "gray-matter": "^4.0.3",
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.2"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4",
+    "@types/node": "^22.9.0"
+  }
+}
