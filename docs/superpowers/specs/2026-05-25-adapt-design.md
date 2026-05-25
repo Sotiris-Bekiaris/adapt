@@ -99,6 +99,8 @@ Control invariants:
 - **API-level assertions:** available to Runner/Verifier as a secondary oracle when the UI can't reveal whether an action truly succeeded (persistence, side effects).
 - **Agent engine:** **Claude Code, headless** (default). Chosen partly because its **streaming structured output** is what feeds the live console. Engine-agnostic in principle (OpenCode/Codex possible) but the console capture is engine-specific.
 - **The wrapper does NOT manage raw LLM context.** It relies on the existing coding-agent harnesses (semantic search, codebase indexing, self-correcting tool loops). adapt provides the *rails*: orchestration, artifacts, state, safeguards, observability — and launches agents with targeted tasks + the right MCP servers + working directory.
+- **adapt's own stack:** **Node + TypeScript.** Playwright/Chrome DevTools MCP are JS-native, Claude Code's streaming JSON is easily consumed in Node, and the websocket console is straightforward. Independent of any target's stack.
+- **Work tracker:** **Jira from the start** (user decision), behind a clean tracker *adapter* so the backend is swappable. The local `.adapt/work-items/` JSON shape stays the canonical payload (and offline fallback); the adapter syncs create/update/transition/dedup to Jira via the Jira MCP. Recorded tradeoff: this adds integration surface in Phase 1 before the loop has proven it finds real bugs — the adapter boundary contains that risk.
 
 ## 10. Artifacts (durable surfaces)
 
@@ -140,7 +142,7 @@ Rationale: the north-star and scenarios *describe the target product*, so they v
 
 **Run results are append-only** — never mutate scenario files to store execution history. A scenario file = intent; the run ledger = history.
 
-**Work tracker:** start with **local file-based work items** (JSON). **Jira is deferred** — its webhooks/transitions/dedup/MCP-availability plumbing is a lot of surface for an MVP whose core unknown is "can the runner detect real bugs reliably?" Add Jira behind a clean adapter only once the loop earns it. (Jira MCP is available in this environment for later.)
+**Work tracker:** **Jira from the start** (user decision), behind a clean *tracker adapter* so the backend is swappable. Work items serialize to the local `.adapt/work-items/` JSON shape as the canonical payload and offline fallback; the adapter syncs them to Jira (create / update / transition / dedup) via the Jira MCP. Phase 1 therefore needs Jira config: project key, issue type, and the transition names that map to the work-item lifecycle (§14).
 
 **ID discipline everywhere:** `SCN-###`, `RUN-<ts>`, `ITEM-###`, commit SHA, branch, verification report ID. Every work item references its scenario + run; every scenario lists linked items; every run records the app commit/version.
 
@@ -149,7 +151,7 @@ Rationale: the north-star and scenarios *describe the target product*, so they v
 The user's explicit top priority: *watch the organism think, live.*
 
 - **Mechanism:** the orchestrator launches each agent as a subprocess and captures its **streaming output** (Claude Code emits structured streaming events: thoughts, tool calls, tool results, responses). Events are fanned out to a live view.
-- **Live console ("mission control"):**
+- **Live console ("mission control") — v1 is a web dashboard served over websockets:**
   - per-agent panes showing thinking / commands / tool-calls / responses in real time,
   - a **global decision timeline** (what was decided, when, why, by which agent, referencing artifact IDs),
   - current **state-machine position** for each active scenario/work item,
@@ -227,14 +229,11 @@ Once the spine clears that bar, the Dreamer+Critic are added and the metric beco
 
 ## 18. Open questions / decisions still to make
 
-1. **Console form factor** — web dashboard (websockets) vs. terminal multiplexer/TUI for v1.
-2. **Work-tracker v1** — confirm local-file work items first, Jira deferred (recommended).
-3. **Cycle cadence & budget guardrails** — wall-clock and spend limits per run before the loop pauses itself.
-4. **A concrete test target to *run* the first experiment against** — supplied purely via config (no logic in adapt); still to be chosen, but does not block building the framework.
-5. **`.adapt/` workspace details** — exactly what is committed to the target repo (north-star, scenarios) vs. generated/gitignored (runs, reports, decision-log).
-6. **adapt's own stack** — language/runtime for the orchestrator + console + scripts (e.g. Node/TypeScript). Independent of any target's stack.
+1. **Cycle cadence & budget guardrails** — wall-clock and spend limits per run before the loop pauses itself.
+2. **A concrete test target to *run* the first experiment against** — supplied purely via config (no logic in adapt); still to be chosen, but does not block building the framework.
+3. **`.adapt/` workspace details** — exactly what is committed to the target repo (north-star, scenarios) vs. generated/gitignored (runs, reports, decision-log).
 
-Resolved: build sequence = **A** (§15); target coupling = **generic/plug-and-play via config** (§4 principle 9, §10).
+Resolved: build sequence = **A** (§15); target coupling = **generic/plug-and-play via config** (§4 principle 9, §10); adapt stack = **Node + TypeScript** (§9); console v1 = **web dashboard over websockets** (§11); work tracker = **Jira from the start, behind a swappable adapter** (§9–10).
 
 ---
 
