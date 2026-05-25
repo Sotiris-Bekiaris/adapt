@@ -1,0 +1,22 @@
+# adapt — local config & secrets (never commit; see blueprint §13)
+config.json
+.env
+.env.*
+*.local
+
+# agent runtime artifacts (generated, not source of truth for the design)
+scenario-runs/
+verification-reports/
+decision-log/
+work-items/
+
+# dependencies / build
+node_modules/
+dist/
+build/
+.venv/
+__pycache__/
+
+# OS / editor
+.DS_Store
+*.log
