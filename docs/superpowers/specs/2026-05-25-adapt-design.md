@@ -3,7 +3,7 @@
 **adapt** = **A**gent **D**evelopment for **A**utonomous **P**roduc**T**s
 
 **Date:** 2026-05-25
-**Status:** Design / brainstorming output. One open decision remains (build sequence — see §15). Not yet approved for implementation.
+**Status:** Design / brainstorming output. **Build sequence decided: Phase A** (§15). **adapt is a generic, plug-and-play framework** — no target logic in this repo (§4 principle 9, §10). Remaining open items are operational (§18). Not yet approved for implementation.
 **Methodology name:** Scenario-Driven Agentic Development (SDAD)
 
 ---
@@ -37,10 +37,11 @@ Explicitly forbidden forms of "self-improvement":
 2. **Reality is the judge.** A change is "done" only when an *independent* agent confirms the scenario passes against the *running* product in a real browser — never because the agent that did the work says so.
 3. **Durable artifacts over agent memory.** Agents communicate through versioned files and tracked work items, not conversational memory. Agent messages are disposable; artifacts are authoritative.
 4. **No human in the loop; human as observer.** Human judgment is replaced by *structural* safeguards (independent verification, adversarial critique, attempt limits), not approval gates.
-5. **Git is the safety net.** Every agent change is a commit on a branch. The organism cannot destroy work; its entire evolutionary history (code *and* ambition) is replayable.
+5. **Git is the safety net.** Every agent change is a commit on a branch *in the target repo* (not adapt's). The organism cannot destroy work; its entire evolutionary history (code *and* ambition) is replayable and revertible.
 6. **Separation of powers by permission.** Different agents have deliberately different knowledge and tools so the loop can't self-approve its mistakes (see §7 permissions table).
 7. **Observability is a first-class subsystem**, not a log file (see §11).
 8. **Demand must have a source.** Autonomy without pressure is drift. The Dreamer+Critic pair (§6, §8) is the engine that creates pressure.
+9. **adapt is generic and plug-and-play.** No target-product logic lives in the adapt repo. A target is described entirely through configuration + hook commands; adapt becomes target-specific only *at runtime*, by reading the plugged project's source, UI, and config (§10). The same adapt install can be pointed at any full-stack project.
 
 ## 5. Honest value proposition & known limitations
 
@@ -101,24 +102,39 @@ Control invariants:
 
 ## 10. Artifacts (durable surfaces)
 
+**Two repositories — the agnostic boundary (§4 principle 9):** adapt is a generic framework. The product being evolved is a *separate* repo adapt is pointed at. Nothing target-specific lives in the adapt repo; per-target artifacts live in a `.adapt/` workspace inside the target.
+
 ```
-adapt/                              # the wrapper/framework repo (this repo)
-  north-star.md                     # versioned vision doc (the genome)
-  scenarios/                        # one md file per scenario (intent)
-    <area>.<flow>.md
-  scenarios/index.json              # machine-readable registry (IDs, status, priority, tags, links, lastResult)
-  scenario-runs/                    # append-only run ledger (what actually happened)
-    <RUN-ID>.json
-  work-items/                       # local issue payloads (work tracker; Jira optional/later)
-    <ITEM-ID>.json
-  verification-reports/
-    <REPORT-ID>.json
-  decision-log/                     # the narrated timeline — primary deliverable
-    <timestamped events>
-  agent-prompts/                    # static prompts for each of the 7 roles
-  schemas/                          # JSON schemas: scenario, run, work-item, verification
-  config.json                       # see §13
+adapt/                         # the generic framework (this repo — static, no target logic)
+  orchestrator/                # the state-machine service (§12)
+  console/                     # the live observability UI (§11)
+  agent-prompts/               # static prompts for the 7 roles
+  schemas/                     # JSON schemas: scenario, run, work-item, verification
+  scripts/                     # generate-scenarios, run-scenarios, triage-failures,
+                               #   verify-issue, orchestrate (thin CLI wrappers)
+  config.example.json          # template only
+  docs/
+
+<target-project>/             # ANY full-stack product; adapt is pointed here
+  <the product source>         # agents read this and COMMIT changes here (git safety net)
+  .adapt/                      # per-target workspace, created on plug-in
+    config.json                # target-specific: appBaseUrl, startCommand, repoPath, db hooks
+                               #   (gitignored if it carries secrets)
+    north-star.md              # versioned vision doc (the genome) — COMMITTED; watch ambition evolve
+    scenarios/                 # user-centered scenarios (intent) — COMMITTED
+      <area>.<flow>.md
+    scenarios/index.json       # machine-readable registry (IDs, status, priority, tags, links, lastResult)
+    scenario-runs/             # append-only run ledger (generated; need not be committed)
+      <RUN-ID>.json
+    work-items/                # local issue payloads (work tracker; Jira optional/later)
+      <ITEM-ID>.json
+    verification-reports/
+      <REPORT-ID>.json
+    decision-log/              # narrated timeline — primary deliverable
+      <timestamped events>
 ```
+
+Rationale: the north-star and scenarios *describe the target product*, so they version alongside its code — "watch ambition evolve in git" works naturally — while the adapt repo stays reusable across any number of targets.
 
 **Scenario file format:** markdown + YAML frontmatter. Frontmatter holds machine metadata incl. optional `hooks.setup` / `hooks.teardown` (§13). Body holds persona, preconditions, user-level steps, expected outcome, failure signals.
 
@@ -176,15 +192,20 @@ failure path: `Ready for Verification → Reopened → In Progress`.
 
 **Attempt limits (anti-infinite-loop):** e.g. `maxFixAttempts: 2`, `maxVerificationAttempts: 3`, `maxItemsPerRun: 10`. On limit breach → park the item in a `needs-attention` state and surface it in the console (the closest thing to "ask a human," but non-blocking — the loop continues with other work).
 
-## 15. Build sequence — OPEN DECISION
+## 15. Build sequence — DECIDED: A (spine first)
 
-The full organism is too many subsystems to stand up at once. Three options were presented; **recommendation is A**, but the user has not yet confirmed.
+The full organism is too many subsystems to stand up at once, so we build in phases. **Phase A is confirmed:** build and trust the autonomous validation-and-repair *spine* first; add the Dreamer+Critic only once the spine is trustworthy. *Rationale: you can't trust a dream's "success" until you can trust the verifier; the verifier grounds dreams in reality, so it must be solid first — and on a known app you can actually tell whether the loop is correct.*
 
-- **A (recommended): Spine first, dreamer last.** Build the autonomous validation-and-repair spine (Runner → Triage → Implementation → independent Verifier) on an existing app, with git safety-net and the live console from cycle one. Scenarios seeded once by the human. Add Dreamer+Critic only after the spine is trustworthy. *Rationale: you can't trust a dream's "success" until you can trust the verifier; the verifier grounds dreams in reality, so it must be solid first. On a known app you can actually tell whether the loop is correct.*
-- **B: Thin full organism.** All seven roles minimal (incl. Dreamer) on a tiny seed app for a few cycles. See the headline phenomenon immediately; hardest to diagnose which part fails.
-- **C: Backbone first.** Console + orchestrator + git harness against stub agents, then plug in real agents one at a time. De-risks observability/control first; delays real product evolution.
+Phasing:
 
-**→ Decision needed before writing the implementation plan.**
+- **Phase 0 — Rails & console.** Orchestrator skeleton (state machine), the plug-in mechanism (`.adapt/` workspace + config), git harness on the target repo, and the live observability console wired to stream agent events. (Captures the de-risking value of option C, but in service of A.)
+- **Phase 1 — The spine (MVP).** Scenario Runner → Failure Triage → Implementation → independent Verifier, fully closed-loop, on a plugged target with human-seeded scenarios. DB isolation hooks (§13) in play. Measured by §17.
+- **Phase 2 — Demand engine.** Add Dreamer + Critic (adversarial pairing, §8) and the source-aware Scenario Generator, so the loop chooses its own work against the north-star.
+- **Phase 3 — Endurance & graduation.** Long continuous runs, regression pool, graduation of stable scenarios into deterministic Playwright tests (§5 pressure valve), budget/cadence guardrails.
+
+Alternatives not taken: **B (thin full organism)** — too hard to diagnose which part fails; **C (backbone only)** — folded into Phase 0 rather than pursued standalone.
+
+The first implementation plan should cover **Phases 0–1** only; Phases 2–3 get their own spec→plan cycles.
 
 ## 16. Safeguards (hard rules for implementation)
 
@@ -206,11 +227,14 @@ Once the spine clears that bar, the Dreamer+Critic are added and the metric beco
 
 ## 18. Open questions / decisions still to make
 
-1. **Build sequence A/B/C** (§15) — needs confirmation.
-2. **Which existing personal product** is the target (stack specifics: framework, DB, auth, start command) — drives hooks & config.
-3. **Console form factor** — web dashboard (websockets) vs. terminal multiplexer/TUI for v1.
-4. **Work-tracker v1** — confirm local-file work items first, Jira deferred.
-5. **Cycle cadence & budget guardrails** — wall-clock and spend limits per run before the loop pauses itself.
+1. **Console form factor** — web dashboard (websockets) vs. terminal multiplexer/TUI for v1.
+2. **Work-tracker v1** — confirm local-file work items first, Jira deferred (recommended).
+3. **Cycle cadence & budget guardrails** — wall-clock and spend limits per run before the loop pauses itself.
+4. **A concrete test target to *run* the first experiment against** — supplied purely via config (no logic in adapt); still to be chosen, but does not block building the framework.
+5. **`.adapt/` workspace details** — exactly what is committed to the target repo (north-star, scenarios) vs. generated/gitignored (runs, reports, decision-log).
+6. **adapt's own stack** — language/runtime for the orchestrator + console + scripts (e.g. Node/TypeScript). Independent of any target's stack.
+
+Resolved: build sequence = **A** (§15); target coupling = **generic/plug-and-play via config** (§4 principle 9, §10).
 
 ---
 
