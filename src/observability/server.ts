@@ -36,13 +36,17 @@ export class ObservabilityServer {
       // after the `open` event). Live events that arrive in the meantime are
       // queued per-connection so the replay-then-live ordering is preserved.
       const backlog = this.bus.recent();
+      // The delay magnitude affects only how soon the initial backlog appears
+      // (imperceptible for a dashboard), never correctness — live events that
+      // arrive before the flush are held in conn.pending and replayed in order.
+      // A generous margin keeps the listener-attach race won even under load.
       setTimeout(() => {
         if (socket.readyState !== socket.OPEN) return;
         for (const e of backlog) socket.send(JSON.stringify(e));
         for (const e of conn.pending) socket.send(JSON.stringify(e));
         conn.pending.length = 0;
         conn.ready = true;
-      }, 5);
+      }, 25);
     });
   }
 
