@@ -35,4 +35,14 @@ program
     process.exit(res.code);
   });
 
+program
+  .command("triage-failures")
+  .description("Triage failed runs into deduplicated, classified work-items")
+  .argument("<targetRepo>", "path to the target product repository")
+  .action(async (targetRepo: string) => {
+    const { triageFailuresCmd } = await import("./commands/triageFailures.ts");
+    const res = await triageFailuresCmd({ targetRepo });
+    process.exit(res.code);
+  });
+
 program.parseAsync(process.argv);
