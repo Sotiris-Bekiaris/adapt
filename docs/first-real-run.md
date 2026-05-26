@@ -22,6 +22,9 @@ with real Claude Code + Playwright + Jira. Do this on a throwaway branch of a re
 6. `adapt triage-failures /path/to/app` — confirm a sensible, deduplicated work-item (and Jira issue if enabled).
 7. `adapt orchestrate /path/to/app` — watch one full pass; open `adapt console` alongside to watch live.
 8. Inspect: the fix branch `adapt/ITEM-xxx`, the work-item status, the decision log, and (if enabled) the Jira issue.
+9. `adapt evolve /path/to/app` — the full organism: the Dreamer proposes ambition + demands, the Critic gates them,
+   the Generator writes new scenarios, then the cycle validates/repairs them. Inspect `.adapt/demands/`, the new
+   `.adapt/scenarios/`, the appended `.adapt/north-star.md` (watch ambition grow in git), and the decision log.
 
 ## What success looks like (blueprint §17)
 The system discovers a real user-visible breakage, files a clear work-item, an agent fixes it on a branch,

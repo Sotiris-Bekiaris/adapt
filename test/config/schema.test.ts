@@ -24,6 +24,12 @@ describe("AdaptConfigSchema", () => {
     expect(r.success).toBe(false);
   });
 
+  it("defaults the demand caps", () => {
+    const parsed = AdaptConfigSchema.parse({ targetRepoPath: "/repo", appBaseUrl: "http://localhost:3000" });
+    expect(parsed.limits.maxDemandsPerCycle).toBe(3);
+    expect(parsed.limits.maxScenariosPerDemand).toBe(2);
+  });
+
   it("defaultConfig() produces a parseable example", () => {
     const r = AdaptConfigSchema.safeParse(defaultConfig("/repo", "http://localhost:3000"));
     expect(r.success).toBe(true);

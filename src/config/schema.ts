@@ -50,6 +50,8 @@ export const AdaptConfigSchema = z.object({
     maxVerificationAttempts: z.number().int().positive().default(3),
     maxItemsPerRun: z.number().int().positive().default(10),
     maxCycleSeconds: z.number().int().positive().default(3600),
+    maxDemandsPerCycle: z.number().int().positive().default(3),
+    maxScenariosPerDemand: z.number().int().positive().default(2),
   }).default({}),
 });
 
