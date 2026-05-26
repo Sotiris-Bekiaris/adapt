@@ -34,6 +34,12 @@ describe("lifecycle transition tables", () => {
     expect(SCENARIO_TRANSITIONS.failed).toContain("item-created");
   });
 
+  it("scenarios can graduate (terminal in the LLM loop)", () => {
+    expect(SCENARIO_TRANSITIONS.regression).toContain("graduated");
+    expect(SCENARIO_TRANSITIONS.passed).toContain("graduated");
+    expect(SCENARIO_TRANSITIONS["graduated"]).toEqual([]);
+  });
+
   it("terminal-ish states exist with no required onward transition", () => {
     expect(RUN_TRANSITIONS.archived).toEqual([]);
     expect(WORK_ITEM_TRANSITIONS.done).toEqual([]);

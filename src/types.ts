@@ -3,7 +3,7 @@
 export const SCENARIO_STATUSES = [
   "draft", "ready", "active", "running", "passed", "regression",
   "failed", "item-created", "awaiting-fix", "ready-for-verification",
-  "verified", "blocked", "invalid", "needs-product-review", "deprecated",
+  "verified", "blocked", "invalid", "needs-product-review", "deprecated", "graduated",
 ] as const;
 export type ScenarioStatus = (typeof SCENARIO_STATUSES)[number];
 
