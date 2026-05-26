@@ -55,6 +55,14 @@ export const AdaptConfigSchema = z.object({
     maxScenariosPerDemand: z.number().int().positive().default(2),
     gradPassThreshold: z.number().int().positive().default(3),
   }).default({}),
+
+  // Run guardrails (blueprint §14)
+  run: z.object({
+    maxCycles: z.number().int().positive().default(10),
+    maxWallClockSeconds: z.number().int().positive().default(3600),
+    pauseSeconds: z.number().int().nonnegative().default(5),
+    maxConsecutiveErrors: z.number().int().positive().default(3),
+  }).default({}),
 });
 
 export type AdaptConfig = z.infer<typeof AdaptConfigSchema>;

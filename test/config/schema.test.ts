@@ -36,6 +36,14 @@ describe("AdaptConfigSchema", () => {
     expect(c.playwrightTestDir).toBe("tests/adapt");
   });
 
+  it("defaults the run guardrails", () => {
+    const c = AdaptConfigSchema.parse({ targetRepoPath: "/repo", appBaseUrl: "http://localhost:3000" });
+    expect(c.run.maxCycles).toBe(10);
+    expect(c.run.maxWallClockSeconds).toBe(3600);
+    expect(c.run.pauseSeconds).toBe(5);
+    expect(c.run.maxConsecutiveErrors).toBe(3);
+  });
+
   it("defaultConfig() produces a parseable example", () => {
     const r = AdaptConfigSchema.safeParse(defaultConfig("/repo", "http://localhost:3000"));
     expect(r.success).toBe(true);
