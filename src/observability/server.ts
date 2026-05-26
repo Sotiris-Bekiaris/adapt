@@ -1,6 +1,6 @@
 import { createServer, type Server } from "node:http";
 import { readFileSync, existsSync } from "node:fs";
-import { dirname, join, resolve, extname } from "node:path";
+import { dirname, join, resolve, extname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { WebSocketServer, type WebSocket } from "ws";
 import type { EventBus } from "./eventBus.ts";
@@ -53,7 +53,8 @@ export class ObservabilityServer {
   private serveStatic(url: string, res: import("node:http").ServerResponse): void {
     const rel = url === "/" ? "index.html" : url.replace(/^\//, "").split("?")[0]!;
     const file = join(PUBLIC_DIR, rel);
-    if (!file.startsWith(PUBLIC_DIR) || !existsSync(file)) {
+    // Require a path-separator boundary so a sibling like "public-evil" can't match.
+    if (!file.startsWith(PUBLIC_DIR + sep) || !existsSync(file)) {
       res.writeHead(404).end("not found");
       return;
     }

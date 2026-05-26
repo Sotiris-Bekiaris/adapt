@@ -17,20 +17,33 @@ function column(role) {
   return events;
 }
 
+// Build nodes with textContent only — event fields (kind/role/tool/text) may be
+// untrusted once real engines stream, so never interpolate them into innerHTML.
 function render(e) {
   const events = column(e.role);
   const div = document.createElement("div");
   div.className = "ev " + e.kind;
-  const label = e.tool ? `${e.kind} ${e.tool}` : e.kind;
-  div.innerHTML = `<span class="k">${label}</span> <span class="t"></span>`;
-  div.querySelector(".t").textContent = e.text ?? (e.data ? JSON.stringify(e.data) : "");
+  const k = document.createElement("span");
+  k.className = "k";
+  k.textContent = e.tool ? `${e.kind} ${e.tool}` : e.kind;
+  const t = document.createElement("span");
+  t.className = "t";
+  t.textContent = e.text ?? (e.data ? JSON.stringify(e.data) : "");
+  div.append(k, document.createTextNode(" "), t);
   events.append(div);
   events.scrollTop = events.scrollHeight;
 
   if (e.channel === "orchestrator" || e.kind === "agent.tool_call") {
     const li = document.createElement("li");
     const time = (e.at || "").slice(11, 19);
-    li.innerHTML = `${time} <span class="role">${e.role}</span> ${e.kind}${e.tool ? " · " + e.tool : ""}`;
+    const roleSpan = document.createElement("span");
+    roleSpan.className = "role";
+    roleSpan.textContent = e.role;
+    li.append(
+      document.createTextNode(time + " "),
+      roleSpan,
+      document.createTextNode(` ${e.kind}${e.tool ? " · " + e.tool : ""}`),
+    );
     timelineEl.append(li);
     timelineEl.scrollTop = timelineEl.scrollHeight;
   }

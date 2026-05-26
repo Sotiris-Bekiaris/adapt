@@ -36,4 +36,13 @@ describe("parseStreamLine", () => {
     expect(parseStreamLine("   ", "r", now)).toEqual([]);
     expect(parseStreamLine("plain output", "r", now)).toEqual([{ kind: "agent.text", role: "r", at: "t", text: "plain output" }]);
   });
+
+  it("does not crash on malformed json (null doc, primitive, or null content blocks)", () => {
+    expect(parseStreamLine("null", "r", now)).toEqual([]);
+    expect(parseStreamLine("42", "r", now)).toEqual([]);
+    const asstNull = JSON.stringify({ type: "assistant", message: { content: [null, { type: "text", text: "ok" }] } });
+    expect(parseStreamLine(asstNull, "r", now)).toEqual([{ kind: "agent.text", role: "r", at: "t", text: "ok" }]);
+    const userNull = JSON.stringify({ type: "user", message: { content: [null] } });
+    expect(parseStreamLine(userNull, "r", now)).toEqual([]);
+  });
 });
