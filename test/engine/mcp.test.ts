@@ -19,4 +19,9 @@ describe("mcpServersFor", () => {
     expect(mcpServersFor("runner", cfg({ playwright: { enabled: false } }))).toEqual([]);
     expect(mcpServersFor("triage", cfg({ jira: { enabled: false } }))).toEqual(["chrome-devtools"]);
   });
+  it("dreamer and generator get chrome-devtools; critic gets nothing; none get jira", () => {
+    expect(mcpServersFor("dreamer", cfg({ jira: { enabled: true } }))).toEqual(["chrome-devtools"]);
+    expect(mcpServersFor("generator", cfg({ jira: { enabled: true } }))).toEqual(["chrome-devtools"]);
+    expect(mcpServersFor("critic", cfg({ jira: { enabled: true } }))).toEqual([]);
+  });
 });

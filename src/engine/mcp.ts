@@ -1,23 +1,26 @@
 import type { AdaptConfig } from "../config/schema.ts";
 
-export type RoleName = "runner" | "triage" | "implementation" | "verification";
+export type RoleName =
+  | "runner" | "triage" | "implementation" | "verification"
+  | "dreamer" | "critic" | "generator";
 
 /**
  * Logical MCP server names to expose to a role, filtered by config toggles.
  * Black-box roles (runner, verification) drive a browser via Playwright; white-box
- * roles (triage, implementation) use Chrome DevTools for deep inspection. Jira is
- * exposed to every role except the runner, when enabled. The runner never touches Jira.
- * Mapping these logical names to concrete `--mcp-config` paths happens at real-run
- * wiring time; Phase 1 logic + tests operate on the names.
+ * roles (triage, implementation, dreamer, generator) use Chrome DevTools to inspect/
+ * explore. The critic reads only. Jira is exposed to triage/implementation/verification
+ * when enabled — never to the runner or the demand roles. Logical names map to concrete
+ * --mcp-config paths at real-run wiring time.
  */
 export function mcpServersFor(role: RoleName, config: AdaptConfig): string[] {
   const out: string[] = [];
-  const blackBox = role === "runner" || role === "verification";
-  if (blackBox) {
+  if (role === "runner" || role === "verification") {
     if (config.mcp.playwright.enabled) out.push("playwright");
-  } else {
+  } else if (role === "triage" || role === "implementation" || role === "dreamer" || role === "generator") {
     if (config.mcp.chromeDevTools.enabled) out.push("chrome-devtools");
   }
-  if (config.mcp.jira.enabled && role !== "runner") out.push("jira");
+  // critic: no browser.
+  const jiraRoles: RoleName[] = ["triage", "implementation", "verification"];
+  if (config.mcp.jira.enabled && jiraRoles.includes(role)) out.push("jira");
   return out;
 }
