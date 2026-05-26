@@ -33,23 +33,21 @@ export async function runCmd(opts: RunCmdOptions): Promise<RunCmdResult> {
   const engine = opts.engine ?? (config.engine.type === "stub" ? new StubEngine() : new ClaudeCodeEngine({ command: config.engine.command }));
   const store = new StateStore(`${ws.root}/state.db`);
 
-  const bus = new EventBus<ConsoleEvent>();
-  const decisionLog = new DecisionLog(opts.targetRepo);
-  bus.subscribe((e) => decisionLog.append(e));
+  try {
+    const bus = new EventBus<ConsoleEvent>();
+    const decisionLog = new DecisionLog(opts.targetRepo);
+    bus.subscribe((e) => decisionLog.append(e));
 
-  const summary = await (async () => {
-    try {
-      return await runContinuous({
-        engine, store, config, targetRepo: opts.targetRepo,
-        sink: (e) => bus.publish(fromAgentEvent(e)),
-        emit: (e) => bus.publish(fromOrchestratorEvent(e)),
-        signal: opts.signal,
-      });
-    } finally {
-      store.close();
-    }
-  })();
+    const summary = await runContinuous({
+      engine, store, config, targetRepo: opts.targetRepo,
+      sink: (e) => bus.publish(fromAgentEvent(e)),
+      emit: (e) => bus.publish(fromOrchestratorEvent(e)),
+      signal: opts.signal,
+    });
 
-  log(`run: ${summary.cycles} cycle(s), stopped by ${summary.stoppedBy}`);
-  return { code: 0, summary };
+    log(`run: ${summary.cycles} cycle(s), stopped by ${summary.stoppedBy}`);
+    return { code: 0, summary };
+  } finally {
+    store.close();
+  }
 }

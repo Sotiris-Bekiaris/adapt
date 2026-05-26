@@ -50,6 +50,8 @@ export async function graduateProven(deps: GraduateDeps): Promise<string[]> {
     if (result.exitCode === 0 && existsSync(specPath) && readFileSync(specPath, "utf8").trim() !== "") {
       setScenarioStatus(ws.scenariosDir, entry.filename, "graduated");
       graduated.push(entry.id);
+    } else {
+      rmSync(specPath, { force: true });
     }
   }
 

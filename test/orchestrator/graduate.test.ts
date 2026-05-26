@@ -83,5 +83,6 @@ describe("graduateProven", () => {
     expect(grad).toEqual([]);
     const meta = parseScenario(readFileSync(join(c.dir, ".adapt", "scenarios", "SCN-001.md"), "utf8"), "SCN-001.md").meta;
     expect(meta.status).toBe("regression");
+    expect(existsSync(join(c.dir, "tests", "adapt", "SCN-001.spec.ts"))).toBe(false);
   });
 });
