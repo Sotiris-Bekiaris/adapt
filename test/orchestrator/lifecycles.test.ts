@@ -22,6 +22,13 @@ describe("lifecycle transition tables", () => {
     expect(WORK_ITEM_TRANSITIONS.reopened).toContain("in-progress");
   });
 
+  it("work-items can be parked in needs-attention from key states", () => {
+    expect(WORK_ITEM_TRANSITIONS.triaged).toContain("needs-attention");
+    expect(WORK_ITEM_TRANSITIONS["ready-for-verification"]).toContain("needs-attention");
+    expect(WORK_ITEM_TRANSITIONS.reopened).toContain("needs-attention");
+    expect(WORK_ITEM_TRANSITIONS["needs-attention"]).toEqual([]);
+  });
+
   it("scenarios can pass into the regression pool and fail into item-created", () => {
     expect(SCENARIO_TRANSITIONS.passed).toContain("regression");
     expect(SCENARIO_TRANSITIONS.failed).toContain("item-created");

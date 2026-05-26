@@ -15,7 +15,7 @@ export type RunStatus = (typeof RUN_STATUSES)[number];
 
 export const WORK_ITEM_STATUSES = [
   "open", "triaged", "in-progress", "in-review",
-  "ready-for-verification", "done", "reopened",
+  "ready-for-verification", "done", "reopened", "needs-attention",
 ] as const;
 export type WorkItemStatus = (typeof WORK_ITEM_STATUSES)[number];
 

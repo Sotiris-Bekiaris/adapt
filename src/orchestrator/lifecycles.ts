@@ -18,12 +18,13 @@ export const RUN_TRANSITIONS: Transitions<RunStatus> = {
 // Work-item lifecycle (blueprint §14)
 export const WORK_ITEM_TRANSITIONS: Transitions<WorkItemStatus> = {
   open: ["triaged"],
-  triaged: ["in-progress"],
+  triaged: ["in-progress", "needs-attention"],
   "in-progress": ["in-review"],
   "in-review": ["ready-for-verification"],
-  "ready-for-verification": ["done", "reopened"],
-  reopened: ["in-progress"],
+  "ready-for-verification": ["done", "reopened", "needs-attention"],
+  reopened: ["in-progress", "needs-attention"],
   done: [],
+  "needs-attention": [],
 };
 
 // Scenario lifecycle (blueprint §14)
