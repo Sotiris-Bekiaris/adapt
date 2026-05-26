@@ -55,4 +55,14 @@ program
     process.exit(res.code);
   });
 
+program
+  .command("evolve")
+  .description("Run one full evolutionary pass: dream -> critique -> generate -> validate -> triage -> repair -> verify")
+  .argument("<targetRepo>", "path to the target product repository")
+  .action(async (targetRepo: string) => {
+    const { evolveCmd } = await import("./commands/evolve.ts");
+    const res = await evolveCmd({ targetRepo });
+    process.exit(res.code);
+  });
+
 program.parseAsync(process.argv);
