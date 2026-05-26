@@ -26,10 +26,10 @@ with real Claude Code + Playwright + Jira. Do this on a throwaway branch of a re
    the Generator writes new scenarios, then the cycle validates/repairs them. Inspect `.adapt/demands/`, the new
    `.adapt/scenarios/`, the appended `.adapt/north-star.md` (watch ambition grow in git), and the decision log.
 10. `adapt run /path/to/app` — the organism runs continuously: it loops `evolve` until a guardrail trips
-    (`run.maxCycles`, `run.maxWallClockSeconds`, `run.maxConsecutiveErrors`) or you request a clean stop with Ctrl-C
-    after the current cycle. Press Ctrl-C again to force exit. Set the guardrails in `config.json`. Watch
-    `adapt console` alongside; inspect the growing north-star, demands, scenarios, graduated Playwright specs in
-    `tests/adapt/`, and the decision log.
+    (`run.maxCycles`, `run.maxWallClockSeconds`, `run.maxConsecutiveErrors`) or you request a stop with Ctrl-C.
+    An in-flight agent process may also receive the terminal interrupt; press Ctrl-C again to force exit. Set the
+    guardrails in `config.json`. Inspect the growing north-star, demands, scenarios, graduated Playwright specs in
+    `tests/adapt/`, and the decision log as it grows.
 
 ## What success looks like (blueprint §17)
 The system discovers a real user-visible breakage, files a clear work-item, an agent fixes it on a branch,
