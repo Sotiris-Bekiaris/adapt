@@ -173,6 +173,7 @@ export const DemandSchema = z.object({
 });
 
 export type Demand = z.infer<typeof DemandSchema>;
+export type DemandStatus = (typeof DEMAND_STATUSES)[number];
 
 export function newDemand(args: {
   id: string; title: string; rationale: string; proposedScenarios: string[]; createdAt: string;
@@ -258,9 +259,7 @@ describe("LocalDemandStore", () => {
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { workspacePaths } from "../workspace/paths.ts";
-import { DemandSchema, type Demand, type DEMAND_STATUSES } from "./demand.ts";
-
-type DemandStatus = (typeof DEMAND_STATUSES)[number];
+import { DemandSchema, type Demand, type DemandStatus } from "./demand.ts";
 
 /** Canonical local store of demands: one JSON file per demand in .adapt/demands/. */
 export class LocalDemandStore {
