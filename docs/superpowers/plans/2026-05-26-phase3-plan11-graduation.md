@@ -267,8 +267,10 @@ import type { ScenarioStatus } from "../types.ts";
 export function setScenarioStatus(scenariosDir: string, filename: string, status: ScenarioStatus): void {
   const path = join(scenariosDir, filename);
   const parsed = matter(readFileSync(path, "utf8"));
-  parsed.data.status = status;
-  writeFileSync(path, matter.stringify(parsed.content, parsed.data), "utf8");
+  // gray-matter caches parsed results by content and returns a shallow copy whose `.data`
+  // points at the cached object; clone before mutating so we never poison that cache.
+  const data = { ...parsed.data, status };
+  writeFileSync(path, matter.stringify(parsed.content, data), "utf8");
 }
 ```
 
