@@ -291,8 +291,8 @@
       No human in the loop. You just watch the organism think.
     </p>
     <div class="chips">
-      <span class="chip ok"><span class="dot"></span>Phase 1 — autonomous spine — complete</span>
-      <span class="chip">126 tests green</span>
+      <span class="chip ok"><span class="dot"></span>Phase 2 — demand engine — complete</span>
+      <span class="chip">155 tests green</span>
       <span class="chip">Node · TypeScript</span>
       <span class="chip">plug into any full-stack app</span>
     </div>
@@ -325,9 +325,9 @@
     <div class="sec-head"><span class="sec-num">02</span><h2>The loop</h2></div>
     <p class="sec-sub">Seven cooperating roles, each an instance of a coding-agent engine, deliberately given different knowledge and permissions — orchestrated by a deterministic state machine and observed live.</p>
     <div class="loop reveal">
-      <div class="node"><span class="tag soon">phase 2</span><div class="role">demand</div><h4>Dreamer</h4><p>Reads the north-star &amp; product, proposes the next ambition — features that add real value.</p><div class="perm">reads code · no write</div></div>
-      <div class="node"><span class="tag soon">phase 2</span><div class="role">demand</div><h4>Critic</h4><p>Skeptical product owner. Challenges each dream — real value or bloat? Only survivors advance.</p><div class="perm">reads code · no write</div></div>
-      <div class="node"><span class="tag soon">phase 2</span><div class="role">discovery</div><h4>Scenario Generator</h4><p>Turns demands into user-centered, black-box scenarios with stable IDs &amp; success criteria.</p><div class="perm">reads code (discovery only)</div></div>
+      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">demand</div><h4>Dreamer</h4><p>Reads the north-star &amp; product, proposes the next ambition — features that add real value.</p><div class="perm">reads code · no write</div></div>
+      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">demand</div><h4>Critic</h4><p>Skeptical product owner. Challenges each dream — real value or bloat? Only survivors advance.</p><div class="perm">reads code · no write</div></div>
+      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">discovery</div><h4>Scenario Generator</h4><p>Turns demands into user-centered, black-box scenarios with stable IDs &amp; success criteria.</p><div class="perm">reads code (discovery only)</div></div>
       <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">validate</div><h4>Runner</h4><p>Black-box. Drives the running app like a user via Playwright MCP, classifies pass/fail/flaky.</p><div class="perm">no source access</div></div>
       <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">triage</div><h4>Failure Triage</h4><p>Dedupes failures, classifies real bugs, opens tracked work with full evidence (Jira-backed).</p><div class="perm">evidence only</div></div>
       <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">repair</div><h4>Implementation</h4><p>Reads the issue, scenario &amp; evidence; makes the smallest safe fix; never closes its own ticket.</p><div class="perm">reads + writes code</div></div>
@@ -339,7 +339,7 @@
   <!-- BUILT -->
   <section id="built">
     <div class="sec-head"><span class="sec-num">03</span><h2>What's built</h2></div>
-    <p class="sec-sub">Phases 0 &amp; 1 are live: the rails + console, and the full autonomous validate-and-repair spine (running on a stub). 51 tasks, test-driven, every plan independently reviewed by Opus 4.7.</p>
+    <p class="sec-sub">Phases 0–2 are live: the rails + console, the autonomous validate-and-repair spine, and the demand engine that dreams up new work — all running on a stub. 67 tasks, test-driven, every plan independently reviewed by Opus 4.7.</p>
     <div class="builds reveal">
       <div class="build">
         <h3>① Workspace &amp; config foundation</h3>
@@ -378,6 +378,16 @@
           <li><b>adapt orchestrate</b>: fix on a branch → <em>independent</em> verify → done / reopen, with attempt limits</li>
         </ul>
       </div>
+      <div class="build">
+        <h3>⑤ The demand engine <span style="font-size:13px;color:var(--accent-dim)">— Phase 2</span></h3>
+        <p class="what">The organism chooses its own work — no success state, it dreams higher.</p>
+        <ul>
+          <li><b>Dreamer</b> proposes ambition (appended to the north-star, git-versioned) + capped demands</li>
+          <li><b>Critic</b> gates each demand — only survivors become scenarios (no rubber-stamping)</li>
+          <li><b>Generator</b> turns approved demands into Node-ID'd, validated black-box scenarios</li>
+          <li><b>adapt evolve</b>: dream → critique → generate → then the whole Phase 1 cycle</li>
+        </ul>
+      </div>
     </div>
   </section>
 
@@ -400,6 +410,7 @@
 <span class="p">adapt</span> <span class="a">run-scenarios</span> ./my-app     <span class="c"># validate scenarios in a real browser</span>
 <span class="p">adapt</span> <span class="a">triage-failures</span> ./my-app  <span class="c"># dedup + file work-items</span>
 <span class="p">adapt</span> <span class="a">orchestrate</span> ./my-app      <span class="c"># one bounded pass: validate → triage → fix → verify</span>
+<span class="p">adapt</span> <span class="a">evolve</span> ./my-app           <span class="c"># the full organism: dream → critique → generate → cycle</span>
 
 <span class="c"># 4 · watch it think, live</span>
 <span class="p">adapt</span> <span class="a">console</span> ./my-app <span class="o">--port</span> 4399
@@ -430,12 +441,12 @@
         <div class="marker"><span class="ph-id">1</span><span class="ph-state">✓ complete</span></div>
         <div class="body"><h4>The autonomous spine</h4><p>Scenario Runner → Failure Triage (Jira) → Implementation → independent Verification, wired into <b>adapt orchestrate</b>. Closed-loop validate-and-repair with DB hooks &amp; attempt limits — stub-tested, ready for the first real run.</p></div>
       </div>
-      <div class="phase next">
-        <div class="marker"><span class="ph-id">2</span><span class="ph-state">▶ next</span></div>
-        <div class="body"><h4>Demand engine</h4><p>Dreamer + Critic (adversarial pairing) + source-aware Scenario Generator. The loop starts choosing its own work against the north-star.</p></div>
+      <div class="phase done">
+        <div class="marker"><span class="ph-id">2</span><span class="ph-state">✓ complete</span></div>
+        <div class="body"><h4>Demand engine</h4><p>Dreamer + Critic (adversarial pairing) + source-aware Scenario Generator, wired into <b>adapt evolve</b>. The loop chooses its own work and the Dreamer appends ambition to the north-star — stub-tested.</p></div>
       </div>
-      <div class="phase todo">
-        <div class="marker"><span class="ph-id">3</span><span class="ph-state">planned</span></div>
+      <div class="phase next">
+        <div class="marker"><span class="ph-id">3</span><span class="ph-state">▶ next</span></div>
         <div class="body"><h4>Endurance &amp; graduation</h4><p>Long continuous runs, a regression pool, graduating stable scenarios into deterministic Playwright tests, budget &amp; cadence guardrails.</p></div>
       </div>
     </div>
@@ -446,6 +457,11 @@
     <div class="sec-head"><span class="sec-num">06</span><h2>Build log</h2></div>
     <p class="sec-sub">A living record — every phase appends here. This file is the canonical human-facing history of adapt's own construction.</p>
     <div class="log reveal">
+      <div class="entry">
+        <div class="date">2026 · 05 · 26 — Phase 2 merged</div>
+        <h4>The demand engine lands on <code>main</code></h4>
+        <p>16 TDD tasks via subagent-driven development (Opus 4.7 throughout) across three plans — Demand model + Dreamer + Critic, the Scenario Generator, and <code>adapt evolve</code>. Plan 7 Opus-reviewed; Plans 8–9 + integration controller-reviewed; fixes en route (a <code>DemandStatus</code> type export, a generator-stub typecheck). 155 tests passing, typecheck clean. The Dreamer now appends ambition to the north-star (append-only, git-versioned) and <code>evolve</code> runs the whole organism — dream → critique → generate → validate → triage → repair → verify — on a stub.</p>
+      </div>
       <div class="entry">
         <div class="date">2026 · 05 · 26 — Phase 1 merged</div>
         <h4>The autonomous spine lands on <code>main</code></h4>
