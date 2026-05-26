@@ -45,4 +45,14 @@ program
     process.exit(res.code);
   });
 
+program
+  .command("orchestrate")
+  .description("Run one bounded autonomous pass: validate -> triage -> repair -> verify")
+  .argument("<targetRepo>", "path to the target product repository")
+  .action(async (targetRepo: string) => {
+    const { orchestrateCmd } = await import("./commands/orchestrate.ts");
+    const res = await orchestrateCmd({ targetRepo });
+    process.exit(res.code);
+  });
+
 program.parseAsync(process.argv);
