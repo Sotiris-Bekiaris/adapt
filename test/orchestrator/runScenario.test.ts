@@ -79,6 +79,13 @@ describe("runScenario", () => {
     expect(rec.status).toBe("inconclusive");
   });
 
+  it("maps an out-of-vocabulary agent status to inconclusive instead of throwing", async () => {
+    // "queued" is schema-valid (a RunStatus) but not a runner verdict; it must not crash the run.
+    const d = setup({ engine: runnerEngine("queued") });
+    const rec = await runScenario({ ...d, targetRepo: d.dir, sink: () => {} }, scenario());
+    expect(rec.status).toBe("inconclusive");
+  });
+
   it("blocks the run (agent never runs) when the setup hook fails", async () => {
     let invoked = false;
     const engine = new StubEngine({ script: () => { invoked = true; return [{ kind: "agent.exit", role: "runner", at: "t", exitCode: 0 }]; } });

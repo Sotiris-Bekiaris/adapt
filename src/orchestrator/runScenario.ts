@@ -20,6 +20,13 @@ export interface RunScenarioDeps {
   sink: (e: AgentEvent) => void;
 }
 
+/** The only verdicts a runner agent may report. RunRecordSchema allows every RunStatus
+ *  (incl. queued/running/archived), so we guard: anything else → inconclusive, never a throw. */
+const RUNNER_VERDICTS: readonly string[] = ["passed", "failed", "blocked", "flaky", "invalid", "inconclusive"];
+
+/** Scenario statuses that are eligible to be run by the runner. */
+const RUNNABLE_STATUSES: readonly string[] = ["ready", "active", "regression"];
+
 /** Run one scenario end-to-end. Always returns the finalized RunRecord (never throws on agent failure). */
 export async function runScenario(deps: RunScenarioDeps, scenario: ParsedScenario): Promise<RunRecord> {
   const { engine, orchestrator, config, targetRepo, sink } = deps;
@@ -60,8 +67,13 @@ export async function runScenario(deps: RunScenarioDeps, scenario: ParsedScenari
   }
 
   const v = outcome.value;
+  const verdict = RUNNER_VERDICTS.includes(v.status) ? v.status : "inconclusive";
+  const notes = verdict === v.status
+    ? v.runnerNotes
+    : `runner returned out-of-vocabulary status "${v.status}"; treated as inconclusive`;
   return orchestrator.recordResult(run.runId, {
-    status: v.status,
+    status: verdict,
+    stepsExecuted: v.stepsExecuted,
     failureStep: v.failureStep,
     expectedOutcome: v.expectedOutcome,
     actualOutcome: v.actualOutcome,
@@ -69,15 +81,20 @@ export async function runScenario(deps: RunScenarioDeps, scenario: ParsedScenari
     networkErrors: v.networkErrors,
     screenshots: v.screenshots,
     artifacts: v.artifacts,
-    runnerNotes: v.runnerNotes,
+    runnerNotes: notes,
   });
 }
 
-/** Run every registered scenario (or one, by id). Returns the finalized records. */
+/**
+ * Run runnable scenarios, or a single scenario by id (an explicit id runs regardless of status).
+ * Without an id, only scenarios in a runnable status (ready/active/regression) are executed.
+ */
 export async function runReadyScenarios(deps: RunScenarioDeps & { scenarioId?: string }): Promise<RunRecord[]> {
   const ws = workspacePaths(deps.targetRepo);
   const entries = rebuildRegistry(deps.targetRepo);
-  const selected = deps.scenarioId ? entries.filter((e) => e.id === deps.scenarioId) : entries;
+  const selected = deps.scenarioId
+    ? entries.filter((e) => e.id === deps.scenarioId)
+    : entries.filter((e) => RUNNABLE_STATUSES.includes(e.status));
   const records: RunRecord[] = [];
   for (const e of selected) {
     const scenario = parseScenario(readFileSync(join(ws.scenariosDir, e.filename), "utf8"), e.filename);

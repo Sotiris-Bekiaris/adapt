@@ -48,4 +48,17 @@ describe("runReadyScenariosCmd", () => {
     expect(res.records.length).toBe(1);
     expect(res.records[0]!.scenarioId).toBe("SCN-002");
   });
+
+  it("skips non-runnable scenarios (e.g. draft) when no id is given", async () => {
+    dir = makeTmpDir();
+    const scn = join(dir, ".adapt", "scenarios");
+    mkdirSync(join(dir, ".adapt", "scenario-runs"), { recursive: true });
+    mkdirSync(scn, { recursive: true });
+    writeFileSync(join(dir, ".adapt", "config.json"), JSON.stringify({ targetRepoPath: dir, appBaseUrl: "http://localhost:3000" }), "utf8");
+    writeFileSync(join(scn, "SCN-001.md"), `---\nid: SCN-001\ntitle: ready one\nstatus: ready\npriority: medium\npersona: User\ntags: [s]\nsource: human-seeded\n---\nbody`, "utf8");
+    writeFileSync(join(scn, "SCN-009.md"), `---\nid: SCN-009\ntitle: draft one\nstatus: draft\npriority: low\npersona: User\ntags: [s]\nsource: human-seeded\n---\nbody`, "utf8");
+    const res = await runReadyScenariosCmd({ targetRepo: dir, engine: passEngine(), log: () => {} });
+    expect(res.records.length).toBe(1);
+    expect(res.records[0]!.scenarioId).toBe("SCN-001");
+  });
 });
