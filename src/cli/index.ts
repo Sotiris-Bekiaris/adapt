@@ -14,4 +14,14 @@ program
     process.exit(code);
   });
 
+program
+  .command("console")
+  .description("Start the live mission-control console")
+  .argument("<targetRepo>", "path to the target product repository")
+  .option("--port <port>", "port to serve on", "4399")
+  .action(async (targetRepo: string, options: { port: string }) => {
+    const { runConsole } = await import("./commands/console.ts");
+    await runConsole({ targetRepo, port: Number(options.port) });
+  });
+
 program.parseAsync(process.argv);
