@@ -104,8 +104,8 @@ Responsibilities are split by domain (workspace / config / scenarios), not by la
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "verbatimModuleSyntax": false,
-    "outDir": "dist",
-    "rootDir": "."
+    "allowImportingTsExtensions": true,
+    "noEmit": true
   },
   "include": ["src", "test"]
 }

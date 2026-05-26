@@ -1,0 +1,111 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^SCN-\\d+$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "ready",
+        "active",
+        "running",
+        "passed",
+        "regression",
+        "failed",
+        "item-created",
+        "awaiting-fix",
+        "ready-for-verification",
+        "verified",
+        "blocked",
+        "invalid",
+        "needs-product-review",
+        "deprecated"
+      ]
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "persona": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "human-seeded",
+        "agent-discovered"
+      ]
+    },
+    "lastResult": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "queued",
+        "running",
+        "passed",
+        "failed",
+        "blocked",
+        "flaky",
+        "invalid",
+        "inconclusive",
+        "archived"
+      ],
+      "default": "unknown"
+    },
+    "lastRunId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "linkedIssues": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "hooks": {
+      "type": "object",
+      "properties": {
+        "setup": {
+          "type": "string"
+        },
+        "teardown": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "id",
+    "title",
+    "status",
+    "priority",
+    "persona",
+    "source"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,177 @@
+{
+  "type": "object",
+  "properties": {
+    "targetRepoPath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "appBaseUrl": {
+      "type": "string",
+      "format": "uri"
+    },
+    "startCommand": {
+      "type": "string"
+    },
+    "engine": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "claude-code",
+            "stub"
+          ],
+          "default": "claude-code"
+        },
+        "command": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "default": {}
+    },
+    "console": {
+      "type": "object",
+      "properties": {
+        "port": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 4399
+        }
+      },
+      "additionalProperties": false,
+      "default": {}
+    },
+    "hooks": {
+      "type": "object",
+      "properties": {
+        "setup": {
+          "type": "string"
+        },
+        "teardown": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "default": {}
+    },
+    "jira": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "baseUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "projectKey": {
+          "type": "string",
+          "default": ""
+        },
+        "defaultIssueType": {
+          "type": "string",
+          "default": "Bug"
+        },
+        "transitions": {
+          "type": "object",
+          "properties": {
+            "inReview": {
+              "type": "string",
+              "default": "In Review"
+            },
+            "readyForVerification": {
+              "type": "string",
+              "default": "Ready for Verification"
+            },
+            "done": {
+              "type": "string",
+              "default": "Done"
+            },
+            "reopened": {
+              "type": "string",
+              "default": "In Progress"
+            }
+          },
+          "additionalProperties": false,
+          "default": {}
+        }
+      },
+      "additionalProperties": false,
+      "default": {}
+    },
+    "mcp": {
+      "type": "object",
+      "properties": {
+        "playwright": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "additionalProperties": false,
+          "default": {}
+        },
+        "chromeDevTools": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "additionalProperties": false,
+          "default": {}
+        },
+        "jira": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "additionalProperties": false,
+          "default": {}
+        }
+      },
+      "additionalProperties": false,
+      "default": {}
+    },
+    "limits": {
+      "type": "object",
+      "properties": {
+        "maxFixAttempts": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 2
+        },
+        "maxVerificationAttempts": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 3
+        },
+        "maxItemsPerRun": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 10
+        },
+        "maxCycleSeconds": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 3600
+        }
+      },
+      "additionalProperties": false,
+      "default": {}
+    }
+  },
+  "required": [
+    "targetRepoPath",
+    "appBaseUrl"
+  ],
+  "additionalProperties": false
+}
