@@ -1,0 +1,44 @@
+import type { Demand } from "../../demand/demand.ts";
+
+export interface GeneratorPromptCtx {
+  demand: Demand;
+  scenariosDir: string;
+  assignedIds: string[];
+}
+
+export function generatorPrompt(ctx: GeneratorPromptCtx): string {
+  const { demand, scenariosDir, assignedIds } = ctx;
+  const idList = assignedIds.join(", ");
+  return `You are the Scenario Generator. Turn the APPROVED demand below into user-level, BLACK-BOX scenarios that a
+runner could later execute against the running app like a real user. You may read the source code for discovery, but
+the scenarios MUST be user-centered and must not reference code, endpoints, files, or implementation details.
+
+APPROVED DEMAND ${demand.id}: ${demand.title}
+Rationale: ${demand.rationale}
+Proposed scenarios: ${JSON.stringify(demand.proposedScenarios)}
+
+Write between 1 and ${assignedIds.length} scenario files (only as many as the demand genuinely needs) into the
+directory: ${scenariosDir}
+Use these assigned IDs in order, lowest first — filename is "<id>.md": ${idList}
+
+Each file MUST be valid scenario markdown with this exact YAML frontmatter shape (use the assigned id):
+---
+id: <assigned id, e.g. ${assignedIds[0]}>
+title: <short user-facing title>
+status: ready
+priority: medium
+persona: <who the user is>
+tags: [<area>]
+source: agent-discovered
+---
+# Scenario
+<As the persona, do X and verify the visible outcome Y.>
+
+## Steps
+1. ...
+
+## Expected outcome
+- <a visible, user-observable success condition>
+
+Do NOT invent extra files or use IDs other than the assigned ones. Write the files before finishing.`;
+}
