@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>adapt — Agent Development for Autonomous ProducTs</title>
+<meta name="description" content="adapt: a closed loop of coding agents that autonomously evolves a software product — scenario-driven, self-verifying, observed from a live mission-control console." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..700&family=JetBrains+Mono:ital,wght@0,400..700;1,400..600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #090c11;
+    --ink-2: #0e131a;
+    --panel: #11171f;
+    --line: #1d2632;
+    --line-2: #2a3849;
+    --text: #cdd8e4;
+    --muted: #75869a;
+    --faint: #4a586a;
+    --accent: #b8ff35;      /* bioluminescent lime — "alive / active" */
+    --accent-dim: #7ea827;
+    --amber: #ffb454;       /* secondary — pending / caution */
+    --mauve: #cBaCff;
+    --cyan: #6fe0d0;
+    --display: "Fraunces", Georgia, serif;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 15px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Blueprint grid + atmospheric glow + grain */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 46px 46px;
+    -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 0%, transparent 78%);
+            mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 0%, transparent 78%);
+    opacity: .35;
+    z-index: -2;
+    pointer-events: none;
+  }
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(60rem 40rem at 78% -8%, rgba(184,255,53,.08), transparent 60%),
+      radial-gradient(50rem 40rem at 8% 18%, rgba(203,172,255,.06), transparent 55%);
+    z-index: -2;
+    pointer-events: none;
+  }
+
+  /* grain overlay */
+  .grain {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .045;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+
+  /* ---------- top bar ---------- */
+  header.bar {
+    position: sticky; top: 0; z-index: 20;
+    backdrop-filter: blur(10px);
+    background: rgba(9,12,17,.72);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar .wrap { display: flex; align-items: center; gap: 18px; height: 56px; }
+  .brand { font-family: var(--display); font-weight: 800; font-size: 20px; letter-spacing: .01em; color: var(--text); }
+  .brand b { color: var(--accent); }
+  .bar nav { margin-left: auto; display: flex; gap: 22px; font-size: 12.5px; text-transform: lowercase; letter-spacing: .06em; }
+  .bar nav a { color: var(--muted); }
+  .bar nav a:hover { color: var(--accent); text-decoration: none; }
+  @media (max-width: 720px){ .bar nav { display:none; } }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 86px 0 54px; position: relative; }
+  .eyebrow {
+    font-size: 12px; letter-spacing: .42em; text-transform: uppercase; color: var(--accent-dim);
+    display: flex; align-items: center; gap: 12px; margin-bottom: 26px;
+  }
+  .eyebrow::after { content:""; height:1px; flex:1; background: linear-gradient(90deg, var(--line-2), transparent); }
+
+  h1.title {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(64px, 16vw, 184px);
+    line-height: .82;
+    letter-spacing: -.03em;
+    margin: 0;
+    color: var(--text);
+  }
+  h1.title em { font-style: italic; font-weight: 300; color: var(--accent); }
+  .expand {
+    margin-top: 18px; font-size: 13px; letter-spacing: .12em; color: var(--faint); text-transform: uppercase;
+  }
+  .expand b { color: var(--muted); font-weight: 400; }
+  .lede {
+    margin: 30px 0 0; max-width: 60ch; font-size: 17px; line-height: 1.72; color: var(--text);
+  }
+  .lede strong { color: var(--accent); font-weight: 600; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+  .chip {
+    font-size: 12px; letter-spacing: .04em; padding: 6px 12px; border: 1px solid var(--line-2);
+    border-radius: 999px; color: var(--muted); display: inline-flex; align-items: center; gap: 8px;
+    background: var(--ink-2);
+  }
+  .chip.ok { color: var(--accent); border-color: rgba(184,255,53,.34); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
+
+  /* ---------- section scaffolding ---------- */
+  section { padding: 58px 0; border-top: 1px solid var(--line); position: relative; }
+  .sec-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 34px; }
+  .sec-num { font-size: 12px; color: var(--accent-dim); letter-spacing: .2em; }
+  h2 {
+    font-family: var(--display); font-weight: 600; font-size: clamp(28px, 4.4vw, 44px);
+    letter-spacing: -.02em; margin: 0; color: var(--text);
+  }
+  .sec-sub { color: var(--muted); max-width: 64ch; margin: -16px 0 30px; }
+
+  p { color: var(--text); }
+  .muted { color: var(--muted); }
+
+  /* ---------- thesis pull ---------- */
+  .thesis {
+    font-family: var(--display); font-style: italic; font-weight: 400;
+    font-size: clamp(22px, 3.4vw, 34px); line-height: 1.35; letter-spacing: -.01em;
+    color: var(--text); max-width: 24ch; margin: 0;
+  }
+  .thesis b { font-style: normal; font-weight: 700; color: var(--accent); }
+  .principle-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-top: 36px; }
+  @media (max-width: 680px){ .principle-grid { grid-template-columns: 1fr; } }
+  .principle { background: var(--ink-2); padding: 20px 22px; }
+  .principle h4 { margin: 0 0 6px; font-family: var(--mono); font-size: 13px; letter-spacing: .03em; color: var(--accent); font-weight: 600; }
+  .principle p { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.6; }
+
+  /* ---------- the loop ---------- */
+  .loop { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  @media (max-width: 860px){ .loop { grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 460px){ .loop { grid-template-columns: 1fr; } }
+  .node {
+    border: 1px solid var(--line-2); background: var(--ink-2); border-radius: 10px; padding: 16px;
+    position: relative; transition: transform .18s ease, border-color .18s ease, background .18s ease;
+  }
+  .node:hover { transform: translateY(-3px); border-color: rgba(184,255,53,.4); background: var(--panel); }
+  .node .role { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+  .node h4 { margin: 8px 0 6px; font-family: var(--display); font-size: 19px; font-weight: 600; color: var(--text); }
+  .node p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+  .node .perm { margin-top: 10px; font-size: 10.5px; letter-spacing: .05em; color: var(--accent-dim); }
+  .node.future { border-style: dashed; opacity: .82; }
+  .node.future .h4 { color: var(--muted); }
+  .node .tag { position: absolute; top: 12px; right: 12px; font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; }
+  .tag.live { color: var(--accent); border: 1px solid rgba(184,255,53,.4); }
+  .tag.soon { color: var(--amber); border: 1px solid rgba(255,180,84,.4); }
+
+  /* ---------- build cards ---------- */
+  .builds { display: grid; gap: 16px; }
+  .build {
+    border: 1px solid var(--line); border-left: 2px solid var(--accent); background: var(--ink-2);
+    border-radius: 0 10px 10px 0; padding: 22px 24px;
+  }
+  .build h3 { margin: 0 0 4px; font-family: var(--display); font-size: 23px; font-weight: 600; color: var(--text); }
+  .build .what { color: var(--muted); font-size: 13px; margin: 0 0 14px; }
+  .build ul { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 7px; }
+  .build li { font-size: 13.5px; color: var(--text); padding-left: 22px; position: relative; }
+  .build li::before { content: "→"; position: absolute; left: 0; color: var(--accent-dim); }
+  .build li b { color: var(--cyan); font-weight: 600; }
+
+  /* ---------- terminal ---------- */
+  .term {
+    background: #07090d; border: 1px solid var(--line-2); border-radius: 12px; overflow: hidden;
+    box-shadow: 0 24px 60px -30px rgba(0,0,0,.9);
+  }
+  .term-bar { display: flex; align-items: center; gap: 8px; padding: 11px 15px; border-bottom: 1px solid var(--line); background: #0b0f15; }
+  .term-bar i { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .term-bar i:nth-child(1){ background:#ff5f57; } .term-bar i:nth-child(2){ background:#febc2e; } .term-bar i:nth-child(3){ background:#28c840; }
+  .term-bar span { margin-left: 10px; font-size: 11.5px; color: var(--faint); letter-spacing: .05em; }
+  .term pre { margin: 0; padding: 20px 22px; font-size: 13px; line-height: 1.85; overflow-x: auto; color: var(--text); }
+  .term .c { color: var(--faint); }            /* comment */
+  .term .p { color: var(--accent); }           /* prompt / command name */
+  .term .a { color: var(--cyan); }             /* arg */
+  .term .o { color: var(--amber); }            /* flag */
+  .term .out { color: var(--muted); }          /* output */
+
+  .tree { background: var(--ink-2); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; margin-top: 18px; }
+  .tree pre { margin: 0; font-size: 12.5px; line-height: 1.7; color: var(--muted); overflow-x: auto; }
+  .tree pre b { color: var(--text); } .tree pre .ac { color: var(--accent); }
+
+  /* ---------- phase tracker ---------- */
+  .phases { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .phase { display: grid; grid-template-columns: 120px 1fr; gap: 0; border-top: 1px solid var(--line); }
+  .phase:first-child { border-top: none; }
+  .phase .marker { padding: 20px 22px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; background: var(--ink-2); }
+  .phase .ph-id { font-family: var(--display); font-size: 30px; font-weight: 700; line-height: 1; }
+  .phase .ph-state { font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; }
+  .phase.done .ph-id { color: var(--accent); } .phase.done .ph-state { color: var(--accent-dim); }
+  .phase.next .ph-id { color: var(--amber); } .phase.next .ph-state { color: var(--amber); }
+  .phase.todo .ph-id { color: var(--faint); } .phase.todo .ph-state { color: var(--faint); }
+  .phase .body { padding: 20px 22px; }
+  .phase .body h4 { margin: 0 0 6px; font-family: var(--display); font-size: 20px; font-weight: 600; color: var(--text); }
+  .phase .body p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.6; }
+  @media (max-width: 560px){ .phase { grid-template-columns: 84px 1fr; } .phase .ph-id { font-size: 24px; } }
+
+  /* ---------- build log ---------- */
+  .log { border-left: 1px solid var(--line-2); margin-left: 6px; padding-left: 0; }
+  .entry { position: relative; padding: 0 0 26px 28px; }
+  .entry::before { content:""; position: absolute; left: -5px; top: 5px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px rgba(184,255,53,.6); }
+  .entry .date { font-size: 11.5px; letter-spacing: .14em; color: var(--accent-dim); text-transform: uppercase; }
+  .entry h4 { margin: 4px 0 6px; font-family: var(--display); font-size: 19px; font-weight: 600; color: var(--text); }
+  .entry p { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.6; }
+  .entry code { background: var(--ink-2); border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; font-size: 12px; color: var(--cyan); }
+
+  /* ---------- footer ---------- */
+  footer { border-top: 1px solid var(--line); padding: 40px 0 70px; color: var(--faint); font-size: 12.5px; }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between; }
+  footer b { color: var(--muted); font-weight: 400; }
+
+  /* ---------- reveal / load animation ---------- */
+  @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  html.js .hero .eyebrow,
+  html.js .hero h1.title,
+  html.js .hero .expand,
+  html.js .hero .lede,
+  html.js .hero .chips { opacity: 0; animation: rise .8s cubic-bezier(.2,.7,.2,1) forwards; }
+  html.js .hero h1.title { animation-delay: .08s; }
+  html.js .hero .expand { animation-delay: .18s; }
+  html.js .hero .lede { animation-delay: .26s; }
+  html.js .hero .chips { animation-delay: .36s; }
+
+  /* Content is visible by default; the entrance is an additive enhancement that
+     only plays when a section scrolls into view. Nothing can stay hidden if the
+     observer never fires (print, full-page capture, no/slow JS). */
+  html.js .reveal.in { animation: rise .7s cubic-bezier(.2,.7,.2,1); }
+
+  @media (prefers-reduced-motion: reduce) {
+    html.js .hero *, html.js .reveal { animation: none !important; opacity: 1 !important; transform: none !important; transition: none !important; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="bar">
+  <div class="wrap">
+    <div class="brand">a<b>·</b>dapt</div>
+    <nav>
+      <a href="#thesis">thesis</a>
+      <a href="#loop">the loop</a>
+      <a href="#built">built</a>
+      <a href="#use">usage</a>
+      <a href="#roadmap">roadmap</a>
+      <a href="#log">build log</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- HERO -->
+  <section class="hero" style="border-top:none;">
+    <div class="eyebrow">Agent Development for Autonomous ProducTs</div>
+    <h1 class="title">a<em>·</em>dapt</h1>
+    <div class="expand"><b>A</b>gent <b>D</b>evelopment for <b>A</b>utonomous <b>P</b>roduc<b>T</b>s</div>
+    <p class="lede">
+      A closed loop of coding agents that <strong>evolves a software product on its own</strong> —
+      discovering user-level scenarios, validating them against the running app like a real user,
+      turning failures into tracked work, fixing them, and dreaming up what to build next.
+      No human in the loop. You just watch the organism think.
+    </p>
+    <div class="chips">
+      <span class="chip ok"><span class="dot"></span>Phase 0 — rails &amp; console — complete</span>
+      <span class="chip">74 tests green</span>
+      <span class="chip">Node · TypeScript</span>
+      <span class="chip">plug into any full-stack app</span>
+    </div>
+  </section>
+
+  <!-- THESIS -->
+  <section id="thesis">
+    <div class="sec-head"><span class="sec-num">01</span><h2>The thesis</h2></div>
+    <div class="reveal">
+      <p class="thesis">The scenario is the <b>contract</b>. Reality is the <b>judge</b>. The product <b>adapts</b> to demand like an organism.</p>
+      <p class="sec-sub" style="margin-top:28px;">
+        adapt is a generic, plug-and-play framework. It is not a coding model — it is the
+        <em>rails</em> around existing elite coding agents (Claude Code &amp; friends): the
+        orchestration, the durable artifacts, the safeguards, and the observability. The agents stay
+        static; the <em>product</em> improves.
+      </p>
+      <div class="principle-grid">
+        <div class="principle"><h4>scenario = contract</h4><p>Truth is a real user goal with a visible success condition — not the code, not the agent's memory, not the current UI.</p></div>
+        <div class="principle"><h4>reality is the judge</h4><p>A change is "done" only when an <em>independent</em> agent confirms the scenario passes in a real browser. No self-approval.</p></div>
+        <div class="principle"><h4>git is the safety net</h4><p>Every change is a commit on a branch in the target repo. The organism can't destroy work; its whole evolution is replayable.</p></div>
+        <div class="principle"><h4>separation of powers</h4><p>Generator may read code; the runner may not; the fixer must; the verifier is independent of the fixer. The loop can't rubber-stamp itself.</p></div>
+        <div class="principle"><h4>durable artifacts</h4><p>Agents talk through versioned files &amp; a run ledger, never fragile chat memory. Messages are disposable; artifacts are authoritative.</p></div>
+        <div class="principle"><h4>demand has a source</h4><p>Autonomy without pressure is drift. A Dreamer raises the north-star; a Critic keeps the dreams honest.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- THE LOOP -->
+  <section id="loop">
+    <div class="sec-head"><span class="sec-num">02</span><h2>The loop</h2></div>
+    <p class="sec-sub">Seven cooperating roles, each an instance of a coding-agent engine, deliberately given different knowledge and permissions — orchestrated by a deterministic state machine and observed live.</p>
+    <div class="loop reveal">
+      <div class="node"><span class="tag soon">phase 2</span><div class="role">demand</div><h4>Dreamer</h4><p>Reads the north-star &amp; product, proposes the next ambition — features that add real value.</p><div class="perm">reads code · no write</div></div>
+      <div class="node"><span class="tag soon">phase 2</span><div class="role">demand</div><h4>Critic</h4><p>Skeptical product owner. Challenges each dream — real value or bloat? Only survivors advance.</p><div class="perm">reads code · no write</div></div>
+      <div class="node"><span class="tag soon">phase 2</span><div class="role">discovery</div><h4>Scenario Generator</h4><p>Turns demands into user-centered, black-box scenarios with stable IDs &amp; success criteria.</p><div class="perm">reads code (discovery only)</div></div>
+      <div class="node"><span class="tag soon">phase 1</span><div class="role">validate</div><h4>Runner</h4><p>Black-box. Drives the running app like a user via Playwright MCP, classifies pass/fail/flaky.</p><div class="perm">no source access</div></div>
+      <div class="node"><span class="tag soon">phase 1</span><div class="role">triage</div><h4>Failure Triage</h4><p>Dedupes failures, classifies real bugs, opens tracked work with full evidence (Jira-backed).</p><div class="perm">evidence only</div></div>
+      <div class="node"><span class="tag soon">phase 1</span><div class="role">repair</div><h4>Implementation</h4><p>Reads the issue, scenario &amp; evidence; makes the smallest safe fix; never closes its own ticket.</p><div class="perm">reads + writes code</div></div>
+      <div class="node"><span class="tag soon">phase 1</span><div class="role">verify</div><h4>Verification</h4><p>Independent of the fixer. Reruns the exact scenario in a real browser before anything is "done".</p><div class="perm">closes work — only after proof</div></div>
+      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">spine</div><h4>Orchestrator + Console</h4><p>Deterministic state machine, git safety net, attempt limits, crash recovery — streamed to mission control.</p><div class="perm">built in Phase 0</div></div>
+    </div>
+  </section>
+
+  <!-- BUILT -->
+  <section id="built">
+    <div class="sec-head"><span class="sec-num">03</span><h2>What's built</h2></div>
+    <p class="sec-sub">Phase 0 — the rails &amp; the console. The watchable, controllable, persistent spine the autonomous agents will plug into. 29 tasks, test-driven, every plan independently reviewed.</p>
+    <div class="builds reveal">
+      <div class="build">
+        <h3>① Workspace &amp; config foundation</h3>
+        <p class="what">The plug-and-play boundary — adapt becomes target-specific only at runtime.</p>
+        <ul>
+          <li><b>adapt init</b> scaffolds a <code style="color:var(--cyan)">.adapt/</code> workspace inside any repo</li>
+          <li>Zod-validated config (engine, console, Jira, MCP servers, limits, DB hooks)</li>
+          <li>Scenario format — markdown + YAML frontmatter — with a machine-readable registry</li>
+          <li>Exported JSON Schemas for config &amp; scenarios</li>
+        </ul>
+      </div>
+      <div class="build">
+        <h3>② Orchestrator &amp; state</h3>
+        <p class="what">The real brain — deterministic, persistent, crash-safe.</p>
+        <ul>
+          <li>Lifecycle <b>state machine</b> for scenarios, runs &amp; work-items (every transition validated)</li>
+          <li><b>SQLite</b>-backed state with an append-only <b>run ledger</b> (the source of truth)</li>
+          <li>Attempt limits &amp; <b>crash recovery</b> — stranded runs resolve to <em>inconclusive</em> on restart</li>
+        </ul>
+      </div>
+      <div class="build">
+        <h3>③ Agent harness &amp; live console</h3>
+        <p class="what">Mission control — watch the organism think in real time.</p>
+        <ul>
+          <li>Pluggable <b>engine</b>: Claude Code headless adapter (stream-json) + a deterministic stub</li>
+          <li><b>Event bus</b> → append-only <b>decision log</b> (the primary research artifact)</li>
+          <li><b>adapt console</b>: a websocket web dashboard — per-agent panes + a decision timeline</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- USAGE -->
+  <section id="use">
+    <div class="sec-head"><span class="sec-num">04</span><h2>How you use it</h2></div>
+    <p class="sec-sub">adapt is a separate framework you point at a target product. Nothing target-specific lives in adapt; a <code style="color:var(--cyan)">.adapt/</code> workspace lives inside the product repo.</p>
+    <div class="term reveal">
+      <div class="term-bar"><i></i><i></i><i></i><span>zsh — adapt</span></div>
+<pre><span class="c"># 1 · plug adapt into any full-stack project</span>
+<span class="p">adapt</span> <span class="a">init</span> ./my-app <span class="o">--app-base-url</span> http://localhost:3000
+<span class="out">  created  ./my-app/.adapt/config.example.json
+  created  ./my-app/.adapt/north-star.md
+  created  ./my-app/.adapt/scenarios/examples/example.login.md
+  adapt workspace ready at ./my-app/.adapt</span>
+
+<span class="c"># 2 · edit .adapt/config.json, seed .adapt/scenarios/ (Phase 1+)</span>
+
+<span class="c"># 3 · launch mission control and watch the organism</span>
+<span class="p">adapt</span> <span class="a">console</span> ./my-app <span class="o">--port</span> 4399
+<span class="out">  adapt console at http://127.0.0.1:4399  (Ctrl-C to stop)</span></pre>
+    </div>
+    <div class="tree reveal">
+<pre><span class="ac">&lt;your-product&gt;/</span>            <span style="color:var(--faint)"># adapt is pointed here; agents commit into this repo</span>
+  <b>.adapt/</b>                  <span style="color:var(--faint)"># per-target workspace (created on init)</span>
+    config.json           <span style="color:var(--faint)"># target-specific: app URL, start cmd, db hooks, Jira</span>
+    <b>north-star.md</b>         <span style="color:var(--faint)"># the "genome" — versioned; watch ambition evolve</span>
+    scenarios/            <span style="color:var(--faint)"># user-centered scenarios (the contract)</span>
+    scenario-runs/        <span style="color:var(--faint)"># append-only run ledger</span>
+    work-items/           <span style="color:var(--faint)"># tracked failures</span>
+    decision-log/         <span style="color:var(--faint)"># narrated timeline — the primary deliverable</span></pre>
+    </div>
+  </section>
+
+  <!-- ROADMAP -->
+  <section id="roadmap">
+    <div class="sec-head"><span class="sec-num">05</span><h2>Roadmap</h2></div>
+    <p class="sec-sub">Build the trustworthy spine first; add autonomous judgment on top. You can only trust a dream once you can trust the verifier.</p>
+    <div class="phases reveal">
+      <div class="phase done">
+        <div class="marker"><span class="ph-id">0</span><span class="ph-state">✓ complete</span></div>
+        <div class="body"><h4>Rails &amp; console</h4><p>Workspace + config, orchestrator state machine, SQLite store &amp; run ledger, agent harness, decision log, live web console. Driven end-to-end by a stub agent.</p></div>
+      </div>
+      <div class="phase next">
+        <div class="marker"><span class="ph-id">1</span><span class="ph-state">▶ next</span></div>
+        <div class="body"><h4>The autonomous spine</h4><p>Scenario Runner → Failure Triage (Jira) → Implementation → independent Verification. Closed-loop validate-and-repair on a real app, with DB isolation hooks. The MVP.</p></div>
+      </div>
+      <div class="phase todo">
+        <div class="marker"><span class="ph-id">2</span><span class="ph-state">planned</span></div>
+        <div class="body"><h4>Demand engine</h4><p>Dreamer + Critic (adversarial pairing) + source-aware Scenario Generator. The loop starts choosing its own work against the north-star.</p></div>
+      </div>
+      <div class="phase todo">
+        <div class="marker"><span class="ph-id">3</span><span class="ph-state">planned</span></div>
+        <div class="body"><h4>Endurance &amp; graduation</h4><p>Long continuous runs, a regression pool, graduating stable scenarios into deterministic Playwright tests, budget &amp; cadence guardrails.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BUILD LOG -->
+  <section id="log">
+    <div class="sec-head"><span class="sec-num">06</span><h2>Build log</h2></div>
+    <p class="sec-sub">A living record — every phase appends here. This file is the canonical human-facing history of adapt's own construction.</p>
+    <div class="log reveal">
+      <div class="entry">
+        <div class="date">2026 · 05 · 26 — Phase 0 merged</div>
+        <h4>Rails &amp; console land on <code>main</code></h4>
+        <p>29 TDD tasks via subagent-driven development across three plans (workspace/config, orchestrator, harness/console). Every plan independently reviewed by Opus 4.7; findings fixed (ledger/recovery consistency, a stream-parser crash guard, ws ordering, dashboard hardening). 74 tests passing, typecheck clean. <code>adapt init</code> and <code>adapt console</code> work end-to-end.</p>
+      </div>
+      <div class="entry">
+        <div class="date">2026 · 05 · 26 — design frozen</div>
+        <h4>Blueprint &amp; Phase-0 plans committed</h4>
+        <p>Brainstormed the full organism, then froze decisions: generic/plug-and-play, Phase-A build order (spine before dreamer), Node + TypeScript, web console, Jira behind a swappable adapter. Three detailed TDD implementation plans written for Phase 0.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <b>adapt</b> — Agent Development for Autonomous ProducTs · a personal experiment in autonomous, scenario-driven product evolution.
+    <span>built with Claude Code · Opus 4.7</span>
+  </div>
+</footer>
+
+<script>
+  document.documentElement.classList.add("js");
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+  }, { threshold: 0.12 });
+  document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+</script>
+</body>
+</html>
