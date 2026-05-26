@@ -27,7 +27,7 @@ function scenarioFile(id: string): string {
 
 function genEngine(count: number, opts: { malformed?: boolean } = {}) {
   return new StubEngine({ script: (s) => {
-    const dirMatch = s.prompt.match(/directory:\s*(\S+)/)![1];
+    const dirMatch = s.prompt.match(/directory:\s*(\S+)/)![1]!;
     const ids = [...s.prompt.matchAll(/SCN-\d+/g)].map((m) => m[0]);
     const unique = [...new Set(ids)];
     for (let i = 0; i < Math.min(count, unique.length); i++) {
