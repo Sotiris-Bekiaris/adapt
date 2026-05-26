@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import type { AgentEngine, AgentEvent } from "../engine/types.ts";
 import type { AdaptConfig } from "../config/schema.ts";
 import { StateStore } from "./store.ts";
@@ -34,8 +34,9 @@ export async function graduateProven(deps: GraduateDeps): Promise<string[]> {
     const scenario = parseScenario(readFileSync(join(ws.scenariosDir, entry.filename), "utf8"), entry.filename);
     const specPath = join(testDir, `${entry.id}.spec.ts`);
     mkdirSync(testDir, { recursive: true });
+    rmSync(specPath, { force: true });
 
-    await runAgent(
+    const result = await runAgent(
       engine,
       {
         role: "graduation",
@@ -46,7 +47,7 @@ export async function graduateProven(deps: GraduateDeps): Promise<string[]> {
       sink,
     );
 
-    if (existsSync(specPath) && readFileSync(specPath, "utf8").trim() !== "") {
+    if (result.exitCode === 0 && existsSync(specPath) && readFileSync(specPath, "utf8").trim() !== "") {
       setScenarioStatus(ws.scenariosDir, entry.filename, "graduated");
       graduated.push(entry.id);
     }

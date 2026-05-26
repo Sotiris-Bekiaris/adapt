@@ -86,6 +86,15 @@ describe("runContinuous", () => {
     expect(errs.length).toBe(1);
   });
 
+  it("reports signal when a stop is requested during an erroring cycle", async () => {
+    const c = setup({ maxConsecutiveErrors: 1, maxCycles: 10, pauseSeconds: 0 });
+    const signal = { stopped: false };
+    const engine = new StubEngine({ script: () => { signal.stopped = true; throw new Error("boom"); } });
+    const sum = await runContinuous({ engine, store: c.store, config: c.config, targetRepo: c.dir, sink: () => {}, emit: () => {}, sleep: noSleep, signal });
+    expect(sum.stoppedBy).toBe("signal");
+    expect(sum.cycles).toBe(1);
+  });
+
   it("stops on the signal (Ctrl-C)", async () => {
     const c = setup({ maxCycles: 99, pauseSeconds: 0 });
     const signal = { stopped: false };

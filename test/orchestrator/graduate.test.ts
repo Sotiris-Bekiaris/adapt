@@ -58,4 +58,30 @@ describe("graduateProven", () => {
     const meta = parseScenario(readFileSync(join(c.dir, ".adapt", "scenarios", "SCN-001.md"), "utf8"), "SCN-001.md").meta;
     expect(meta.status).toBe("regression"); // unchanged
   });
+
+  it("does not graduate from a stale spec when the agent writes no spec", async () => {
+    const c = ctx();
+    const specPath = join(c.dir, "tests", "adapt", "SCN-001.spec.ts");
+    mkdirSync(join(c.dir, "tests", "adapt"), { recursive: true });
+    writeFileSync(specPath, "stale spec\n", "utf8");
+    for (let i = 0; i < 3; i++) c.store.incrementScenarioPasses("SCN-001");
+    const grad = await graduateProven({ engine: gradEngine(false), store: c.store, config: c.config, targetRepo: c.dir, sink: () => {} });
+    expect(grad).toEqual([]);
+    const meta = parseScenario(readFileSync(join(c.dir, ".adapt", "scenarios", "SCN-001.md"), "utf8"), "SCN-001.md").meta;
+    expect(meta.status).toBe("regression");
+  });
+
+  it("does not graduate when the agent exits nonzero", async () => {
+    const c = ctx();
+    const engine = new StubEngine({ script: (s) => {
+      const p = s.prompt.match(/SPEC_FILE=(.+)/)![1]!.trim();
+      writeFileSync(p, `import { test, expect } from "@playwright/test";\ntest("SCN-001", async ({ page }) => { await page.goto("/"); });\n`, "utf8");
+      return [{ kind: "agent.exit", role: s.role, at: "t", exitCode: 1 }];
+    }});
+    for (let i = 0; i < 3; i++) c.store.incrementScenarioPasses("SCN-001");
+    const grad = await graduateProven({ engine, store: c.store, config: c.config, targetRepo: c.dir, sink: () => {} });
+    expect(grad).toEqual([]);
+    const meta = parseScenario(readFileSync(join(c.dir, ".adapt", "scenarios", "SCN-001.md"), "utf8"), "SCN-001.md").meta;
+    expect(meta.status).toBe("regression");
+  });
 });

@@ -82,12 +82,12 @@ export async function runContinuous(deps: ContinuousDeps): Promise<ContinuousSum
     }
     cycles++;
 
+    if (deps.signal?.stopped) return { cycles, stoppedBy: "signal", evolveSummaries };
     if (errored && consecutiveErrors >= r.maxConsecutiveErrors) {
       return { cycles, stoppedBy: "errors", evolveSummaries };
     }
     if (cycles >= r.maxCycles) return { cycles, stoppedBy: "maxCycles", evolveSummaries };
     if (wallClockExceeded()) return { cycles, stoppedBy: "wallClock", evolveSummaries };
-    if (deps.signal?.stopped) return { cycles, stoppedBy: "signal", evolveSummaries };
     const stoppedBy = await pauseBetweenCycles();
     if (stoppedBy) return { cycles, stoppedBy, evolveSummaries };
   }
