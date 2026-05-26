@@ -10,6 +10,7 @@ import { dreamerPrompt, DreamResultSchema } from "../agents/prompts/dreamer.ts";
 import { LocalDemandStore } from "./demandStore.ts";
 import { newDemand, type Demand } from "./demand.ts";
 import { appendAmbition } from "./northStar.ts";
+import { demandTitleKey } from "./dedupeDemand.ts";
 
 export interface DreamDeps {
   engine: AgentEngine;
@@ -50,7 +51,12 @@ export async function runDream(deps: DreamDeps): Promise<{ ambitionAppended: boo
   }
 
   const created: Demand[] = [];
-  for (const d of outcome.value.demands.slice(0, config.limits.maxDemandsPerCycle)) {
+  const seen = new Set(store.list().filter((d) => d.status !== "rejected").map((d) => demandTitleKey(d.title)));
+  for (const d of outcome.value.demands) {
+    if (created.length >= config.limits.maxDemandsPerCycle) break;
+    const key = demandTitleKey(d.title);
+    if (seen.has(key)) continue; // dedup against existing + already-created-this-pass
+    seen.add(key);
     const demand = newDemand({ id: store.nextId(), title: d.title, rationale: d.rationale, proposedScenarios: d.proposedScenarios, createdAt: now() });
     store.create(demand);
     created.push(demand);

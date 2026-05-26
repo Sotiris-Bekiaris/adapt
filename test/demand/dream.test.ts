@@ -52,4 +52,22 @@ describe("runDream", () => {
     expect(res.demands).toEqual([]);
     expect(res.ambitionAppended).toBe(false);
   });
+
+  it("skips demands whose title duplicates an existing non-rejected demand", async () => {
+    const c = ctx();
+    const { LocalDemandStore } = await import("../../src/demand/demandStore.ts");
+    const { newDemand } = await import("../../src/demand/demand.ts");
+    new LocalDemandStore(c.dir).create(newDemand({ id: "DMD-001", title: "Demand 1", rationale: "r", proposedScenarios: [], createdAt: "t" }));
+    const engine = new StubEngine({ script: (s) => {
+      const path = s.prompt.match(/RESULT_FILE=(.+)/)![1]!.trim();
+      writeFileSync(path, JSON.stringify({ ambition: null, demands: [
+        { title: "  demand   1 ", rationale: "r", proposedScenarios: [] },
+        { title: "Demand 2", rationale: "r", proposedScenarios: [] },
+      ] }), "utf8");
+      return [{ kind: "agent.exit", role: s.role, at: "t", exitCode: 0 }];
+    }});
+    const res = await runDream({ engine, config: c.config, targetRepo: c.dir, sink: () => {}, now: () => "t" });
+    expect(res.demands.map((d) => d.title)).toEqual(["Demand 2"]); // dup dropped
+    expect(new LocalDemandStore(c.dir).list().length).toBe(2); // existing + the one new
+  });
 });
