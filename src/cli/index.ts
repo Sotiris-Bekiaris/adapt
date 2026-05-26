@@ -65,4 +65,16 @@ program
     process.exit(res.code);
   });
 
+program
+  .command("run")
+  .description("Run the organism continuously (bounded evolve loop) until a guardrail or Ctrl-C")
+  .argument("<targetRepo>", "path to the target product repository")
+  .action(async (targetRepo: string) => {
+    const { runCmd } = await import("./commands/run.ts");
+    const signal = { stopped: false };
+    process.on("SIGINT", () => { signal.stopped = true; });
+    const res = await runCmd({ targetRepo, signal });
+    process.exit(res.code);
+  });
+
 program.parseAsync(process.argv);
