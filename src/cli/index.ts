@@ -70,9 +70,11 @@ program
   .description("Run the organism continuously (bounded evolve loop) until a guardrail or Ctrl-C")
   .argument("<targetRepo>", "path to the target product repository")
   .action(async (targetRepo: string) => {
-    const { runCmd } = await import("./commands/run.ts");
+    const { runCmd, requestRunStop } = await import("./commands/run.ts");
     const signal = { stopped: false };
-    process.on("SIGINT", () => { signal.stopped = true; });
+    process.on("SIGINT", () => {
+      if (!requestRunStop(signal, (msg) => process.stderr.write(`${msg}\n`))) process.exit(130);
+    });
     const res = await runCmd({ targetRepo, signal });
     process.exit(res.code);
   });

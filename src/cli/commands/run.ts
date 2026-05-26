@@ -18,6 +18,13 @@ export interface RunCmdOptions {
 
 export interface RunCmdResult { code: number; summary: ContinuousSummary; }
 
+export function requestRunStop(signal: { stopped: boolean }, log: (msg: string) => void = console.error): boolean {
+  if (signal.stopped) return false;
+  signal.stopped = true;
+  log("run: stopping after current cycle; press Ctrl-C again to force exit");
+  return true;
+}
+
 /** Core of `adapt run`: the bounded continuous loop, events mirrored to the decision log. */
 export async function runCmd(opts: RunCmdOptions): Promise<RunCmdResult> {
   const log = opts.log ?? console.log;
@@ -30,14 +37,19 @@ export async function runCmd(opts: RunCmdOptions): Promise<RunCmdResult> {
   const decisionLog = new DecisionLog(opts.targetRepo);
   bus.subscribe((e) => decisionLog.append(e));
 
-  const summary = await runContinuous({
-    engine, store, config, targetRepo: opts.targetRepo,
-    sink: (e) => bus.publish(fromAgentEvent(e)),
-    emit: (e) => bus.publish(fromOrchestratorEvent(e)),
-    signal: opts.signal,
-  });
+  const summary = await (async () => {
+    try {
+      return await runContinuous({
+        engine, store, config, targetRepo: opts.targetRepo,
+        sink: (e) => bus.publish(fromAgentEvent(e)),
+        emit: (e) => bus.publish(fromOrchestratorEvent(e)),
+        signal: opts.signal,
+      });
+    } finally {
+      store.close();
+    }
+  })();
 
-  store.close();
   log(`run: ${summary.cycles} cycle(s), stopped by ${summary.stoppedBy}`);
   return { code: 0, summary };
 }
