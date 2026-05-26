@@ -91,4 +91,23 @@ describe("runCycle robustness", () => {
     await runCycle({ engine, store: c.store, config: c.config, targetRepo: c.dir, sink: () => {}, emit: () => {} });
     expect(c.store.getRun("RUN-STALE")?.status).toBe("inconclusive");
   });
+
+  it("graduates a scenario once it has passed the threshold consecutively, then skips it", async () => {
+    const c = setup();
+    writeFileSync(join(c.dir, ".adapt", "scenarios", "SCN-001.md"), `---\nid: SCN-001\ntitle: Login\nstatus: ready\npriority: high\npersona: User\ntags: [a]\nsource: human-seeded\n---\nLog in.`, "utf8");
+    const engine = new StubEngine({ script: (s) => {
+      if (s.role === "runner") { const p = s.prompt.match(/RESULT_FILE=(.+)/)![1]!.trim(); writeFileSync(p, JSON.stringify({ runId: "x", scenarioId: "SCN-001", scenarioTitle: "Login", status: "passed", startedAt: "t", finishedAt: "t", appBaseUrl: "http://x", appVersion: null, environment: "local", stepsExecuted: 1, failureStep: null, expectedOutcome: "x", actualOutcome: "x", consoleErrors: [], networkErrors: [], screenshots: [], artifacts: [], linkedJiraIssue: null, runnerNotes: "" })); }
+      else if (s.role === "graduation") { const p = s.prompt.match(/SPEC_FILE=(.+)/)![1]!.trim(); writeFileSync(p, `import { test } from "@playwright/test";\ntest("x", async () => {});\n`); }
+      return [{ kind: "agent.exit", role: s.role, at: "t", exitCode: 0 }];
+    }});
+    const deps = { engine, store: c.store, config: { ...c.config, limits: { ...c.config.limits, gradPassThreshold: 2 } }, targetRepo: c.dir, sink: () => {}, emit: () => {} };
+    await runCycle(deps);             // pass 1 -> not yet graduated
+    const after1 = await runCycle(deps); // pass 2 -> graduates
+    expect(after1.graduated).toEqual(["SCN-001"]);
+    const { parseScenario } = await import("../../src/scenarios/parse.ts");
+    const { readFileSync: rf } = await import("node:fs");
+    expect(parseScenario(rf(join(c.dir, ".adapt", "scenarios", "SCN-001.md"), "utf8"), "SCN-001.md").meta.status).toBe("graduated");
+    const after2 = await runCycle(deps); // graduated -> skipped, no runs
+    expect(after2.runs.length).toBe(0);
+  });
 });

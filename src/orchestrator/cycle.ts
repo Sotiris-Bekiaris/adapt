@@ -9,6 +9,7 @@ import { rebuildRegistry } from "../scenarios/registry.ts";
 import { parseScenario, type ParsedScenario } from "../scenarios/parse.ts";
 import { runReadyScenarios } from "./runScenario.ts";
 import { triageFailures, type TriageSummary } from "./triage.ts";
+import { graduateProven } from "./graduate.ts";
 import { implementWorkItem, verifyWorkItem, moveItemToNeedsAttention, type RepairDeps } from "./repair.ts";
 import { LocalTracker } from "../tracker/localTracker.ts";
 import type { WorkItem } from "../tracker/workItem.ts";
@@ -29,6 +30,7 @@ export interface CycleSummary {
   runs: RunRecord[];
   triage: TriageSummary;
   repaired: { itemId: string; verified: boolean; parked: boolean }[];
+  graduated: string[];
 }
 
 function loadScenario(targetRepo: string, id: string): ParsedScenario | undefined {
@@ -49,6 +51,10 @@ export async function runCycle(deps: CycleDeps): Promise<CycleSummary> {
   orchestrator.recoverIncomplete(); // clean up runs stranded by a crashed prior cycle
 
   const runs = await runReadyScenarios({ engine, orchestrator, config, targetRepo, sink });
+  for (const run of runs) {
+    if (run.status === "passed") store.incrementScenarioPasses(run.scenarioId);
+    else store.resetScenarioPasses(run.scenarioId);
+  }
   const triage = await triageFailures({ engine, store, config, targetRepo, sink, now: deps.now });
 
   const repaired: CycleSummary["repaired"] = [];
@@ -74,7 +80,8 @@ export async function runCycle(deps: CycleDeps): Promise<CycleSummary> {
     repaired.push(await driveItem(repairDeps, orchestrator, tracker, item, scenario));
   }
 
-  return { runs, triage, repaired };
+  const graduated = await graduateProven({ engine, store, config, targetRepo, sink });
+  return { runs, triage, repaired, graduated };
 }
 
 /** Drive a single work-item to its next state. ready-for-verification -> verify only;
