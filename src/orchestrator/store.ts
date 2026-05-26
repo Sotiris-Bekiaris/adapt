@@ -39,6 +39,10 @@ export class StateStore {
         count INTEGER NOT NULL DEFAULT 0,
         PRIMARY KEY (scenarioId, kind)
       );
+      CREATE TABLE IF NOT EXISTS scenario_passes (
+        scenarioId TEXT PRIMARY KEY,
+        count INTEGER NOT NULL DEFAULT 0
+      );
     `);
   }
 
@@ -88,6 +92,27 @@ export class StateStore {
     const row = this.db.prepare(`SELECT count FROM attempts WHERE scenarioId = ? AND kind = ?`)
       .get(scenarioId, kind) as { count: number } | undefined;
     return row?.count ?? 0;
+  }
+
+  getScenarioPasses(scenarioId: string): number {
+    const row = this.db.prepare(`SELECT count FROM scenario_passes WHERE scenarioId = ?`).get(scenarioId) as
+      | { count: number } | undefined;
+    return row?.count ?? 0;
+  }
+
+  incrementScenarioPasses(scenarioId: string): number {
+    this.db.prepare(`
+      INSERT INTO scenario_passes (scenarioId, count) VALUES (?, 1)
+      ON CONFLICT(scenarioId) DO UPDATE SET count = count + 1
+    `).run(scenarioId);
+    return this.getScenarioPasses(scenarioId);
+  }
+
+  resetScenarioPasses(scenarioId: string): void {
+    this.db.prepare(`
+      INSERT INTO scenario_passes (scenarioId, count) VALUES (?, 0)
+      ON CONFLICT(scenarioId) DO UPDATE SET count = 0
+    `).run(scenarioId);
   }
 
   close(): void {

@@ -44,4 +44,14 @@ describe("StateStore", () => {
     expect(s.getAttempts("SCN-001", "fix")).toBe(2);
     s.close();
   });
+
+  it("tracks consecutive scenario passes", () => {
+    const s = mem();
+    expect(s.getScenarioPasses("SCN-001")).toBe(0);
+    expect(s.incrementScenarioPasses("SCN-001")).toBe(1);
+    expect(s.incrementScenarioPasses("SCN-001")).toBe(2);
+    s.resetScenarioPasses("SCN-001");
+    expect(s.getScenarioPasses("SCN-001")).toBe(0);
+    s.close();
+  });
 });
