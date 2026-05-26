@@ -30,6 +30,12 @@ describe("AdaptConfigSchema", () => {
     expect(parsed.limits.maxScenariosPerDemand).toBe(2);
   });
 
+  it("defaults the graduation knobs", () => {
+    const c = AdaptConfigSchema.parse({ targetRepoPath: "/repo", appBaseUrl: "http://localhost:3000" });
+    expect(c.limits.gradPassThreshold).toBe(3);
+    expect(c.playwrightTestDir).toBe("tests/adapt");
+  });
+
   it("defaultConfig() produces a parseable example", () => {
     const r = AdaptConfigSchema.safeParse(defaultConfig("/repo", "http://localhost:3000"));
     expect(r.success).toBe(true);

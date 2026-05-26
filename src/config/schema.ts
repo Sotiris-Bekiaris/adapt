@@ -4,6 +4,7 @@ export const AdaptConfigSchema = z.object({
   // Target coupling (blueprint §10, principle 9)
   targetRepoPath: z.string().min(1),
   appBaseUrl: z.string().url(),
+  playwrightTestDir: z.string().default("tests/adapt"),
   startCommand: z.string().optional(),
 
   // Coding-agent engine that backs every role (blueprint §9)
@@ -52,6 +53,7 @@ export const AdaptConfigSchema = z.object({
     maxCycleSeconds: z.number().int().positive().default(3600),
     maxDemandsPerCycle: z.number().int().positive().default(3),
     maxScenariosPerDemand: z.number().int().positive().default(2),
+    gradPassThreshold: z.number().int().positive().default(3),
   }).default({}),
 });
 
