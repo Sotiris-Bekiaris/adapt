@@ -1,12 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { WorkItemSchema, newWorkItem } from "../../src/tracker/workItem.ts";
+import type { RunRecord } from "../../src/orchestrator/runRecord.ts";
 
-const record = {
+const record: RunRecord = {
   runId: "RUN-1", scenarioId: "SCN-001", scenarioTitle: "Login works", status: "failed",
   startedAt: "t", finishedAt: "t", appBaseUrl: "http://x", appVersion: null, environment: "local",
   stepsExecuted: 3, failureStep: 2, expectedOutcome: "home page", actualOutcome: "error toast",
   consoleErrors: ["TypeError x"], networkErrors: [], screenshots: [], artifacts: [], linkedJiraIssue: null, runnerNotes: "",
-} as const;
+};
 
 describe("WorkItem", () => {
   it("newWorkItem builds a valid triaged item from a run + triage verdict", () => {
