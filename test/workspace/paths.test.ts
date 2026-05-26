@@ -13,6 +13,7 @@ describe("workspacePaths", () => {
     expect(p.workItemsDir).toBe("/repo/.adapt/work-items");
     expect(p.verificationReportsDir).toBe("/repo/.adapt/verification-reports");
     expect(p.decisionLogDir).toBe("/repo/.adapt/decision-log");
+    expect(p.demandsDir).toBe("/repo/.adapt/demands");
   });
 
   it("resolves relative target dirs to absolute", () => {
