@@ -63,6 +63,7 @@ export async function runContinuous(deps: ContinuousDeps): Promise<ContinuousSum
     if (errored && consecutiveErrors >= r.maxConsecutiveErrors) {
       return { cycles, stoppedBy: "errors", evolveSummaries };
     }
+    if (cycles >= r.maxCycles) return { cycles, stoppedBy: "maxCycles", evolveSummaries };
     if (deps.signal?.stopped) return { cycles, stoppedBy: "signal", evolveSummaries };
     await sleep(r.pauseSeconds * 1000);
   }

@@ -43,6 +43,17 @@ describe("runContinuous", () => {
     expect(sum.evolveSummaries.length).toBe(2);
   });
 
+  it("does not sleep after the final allowed cycle", async () => {
+    const c = setup({ maxCycles: 1, pauseSeconds: 0 });
+    const signal = { stopped: false };
+    let sleeps = 0;
+    const sleep = () => { sleeps++; signal.stopped = true; return Promise.resolve(); };
+    const sum = await runContinuous({ engine: quietEngine(), store: c.store, config: c.config, targetRepo: c.dir, sink: () => {}, emit: () => {}, sleep, signal });
+    expect(sum.stoppedBy).toBe("maxCycles");
+    expect(sum.cycles).toBe(1);
+    expect(sleeps).toBe(0);
+  });
+
   it("stops after maxConsecutiveErrors", async () => {
     const c = setup({ maxConsecutiveErrors: 1, maxCycles: 10, pauseSeconds: 0 });
     const errs: string[] = [];
