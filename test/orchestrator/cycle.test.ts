@@ -7,6 +7,9 @@ import { StateStore } from "../../src/orchestrator/store.ts";
 import { AdaptConfigSchema } from "../../src/config/schema.ts";
 import { runCycle } from "../../src/orchestrator/cycle.ts";
 import { LocalTracker } from "../../src/tracker/localTracker.ts";
+import { newWorkItem } from "../../src/tracker/workItem.ts";
+import { newRunRecord } from "../../src/orchestrator/runRecord.ts";
+import { RunLedger } from "../../src/orchestrator/runLedger.ts";
 
 let dir: string | undefined;
 afterEach(() => { if (dir) cleanupTmp(dir); dir = undefined; });
@@ -59,5 +62,33 @@ describe("runCycle", () => {
     expect(new LocalTracker(c.dir).list()[0]!.status).toBe("done");
     expect(orchEvents.some((e) => e.type === "run.created")).toBe(true);
     expect(agentEvents.some((e) => e.kind === "agent.exit")).toBe(true);
+  });
+});
+
+describe("runCycle robustness", () => {
+  it("re-drives a pre-existing reopened work-item (implement -> verify)", async () => {
+    const c = setup();
+    const tracker = new LocalTracker(c.dir);
+    tracker.create({ ...newWorkItem({ id: "ITEM-001", record: { ...newRunRecord({ runId: "RUN-0", scenarioId: "SCN-001", scenarioTitle: "Login", appBaseUrl: "http://x", startedAt: "t" }), status: "failed", finishedAt: "t" }, dedupeKey: "k", createdAt: "t", triage: { classification: "bug", severity: "high", title: "Login fails", isActionable: true, jiraKey: null, notes: "" } }), status: "reopened" });
+    writeFileSync(join(c.dir, ".adapt", "scenarios", "SCN-001.md"), `---\nid: SCN-001\ntitle: Login\nstatus: ready\npriority: high\npersona: User\ntags: [a]\nsource: human-seeded\n---\nLog in.`, "utf8");
+    const engine = new StubEngine({ script: (s) => {
+      const path = (s.prompt.match(/RESULT_FILE=(.+)/) || [])[1]?.trim();
+      if (s.role === "runner") writeFileSync(path!, JSON.stringify({ runId: "x", scenarioId: "SCN-001", scenarioTitle: "Login", status: "passed", startedAt: "t", finishedAt: "t", appBaseUrl: "http://x", appVersion: null, environment: "local", stepsExecuted: 1, failureStep: null, expectedOutcome: "x", actualOutcome: "x", consoleErrors: [], networkErrors: [], screenshots: [], artifacts: [], linkedJiraIssue: null, runnerNotes: "" }));
+      else if (s.role === "implementation") writeFileSync(path!, JSON.stringify({ branch: "adapt/ITEM-001", summary: "fix", testsPassed: true, jiraMovedTo: null }));
+      else if (s.role === "verification") writeFileSync(path!, JSON.stringify({ verified: true, status: "passed", failureStep: null, actualOutcome: null, notes: "", jiraMovedTo: null }));
+      return [{ kind: "agent.exit", role: s.role, at: "t", exitCode: 0 }];
+    }});
+    const sum = await runCycle({ engine, store: c.store, config: c.config, targetRepo: c.dir, sink: () => {}, emit: () => {} });
+    expect(sum.repaired.some((r) => r.itemId === "ITEM-001" && r.verified)).toBe(true);
+    expect(new LocalTracker(c.dir).list().find((i) => i.id === "ITEM-001")!.status).toBe("done");
+  });
+
+  it("recovers a run stranded 'running' before the cycle", async () => {
+    const c = setup();
+    const ledger = new RunLedger(c.dir, c.store);
+    ledger.write({ ...newRunRecord({ runId: "RUN-STALE", scenarioId: "SCN-001", scenarioTitle: "x", appBaseUrl: "http://x", startedAt: "t" }), status: "running" });
+    const engine = new StubEngine({ script: (s) => [{ kind: "agent.exit", role: s.role, at: "t", exitCode: 0 }] });
+    await runCycle({ engine, store: c.store, config: c.config, targetRepo: c.dir, sink: () => {}, emit: () => {} });
+    expect(c.store.getRun("RUN-STALE")?.status).toBe("inconclusive");
   });
 });
