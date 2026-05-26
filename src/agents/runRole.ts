@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, rmSync } from "node:fs";
-import type { ZodType } from "zod";
+import type { ZodType, ZodTypeDef } from "zod";
 import type { AgentEngine, AgentEvent, AgentSpec } from "../engine/types.ts";
 import { runAgent } from "../engine/runAgent.ts";
 
@@ -18,7 +18,7 @@ export async function runRole<T>(
   engine: AgentEngine,
   spec: AgentSpec,
   resultFile: string,
-  schema: ZodType<T>,
+  schema: ZodType<T, ZodTypeDef, unknown>,
   sink: (e: AgentEvent) => void,
 ): Promise<RoleOutcome<T>> {
   if (existsSync(resultFile)) rmSync(resultFile);
