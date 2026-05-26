@@ -79,4 +79,16 @@ describe("verifyWorkItem", () => {
     expect(res.verified).toBe(false);
     expect(tracker.list()[0]!.status).toBe("needs-attention");
   });
+
+  it("treats a missing verification result as inconclusive (item stays ready-for-verification, no attempt consumed)", async () => {
+    const engine = new StubEngine({ script: (s) => [{ kind: "agent.exit", role: s.role, at: "t", exitCode: 0 }] }); // writes no result
+    const d = deps(engine);
+    const tracker = new LocalTracker(d.targetRepo);
+    tracker.create(item("ready-for-verification"));
+    const res = await verifyWorkItem(d, tracker.list()[0]!, scenario());
+    expect(res.verified).toBe(false);
+    expect(res.inconclusive).toBe(true);
+    expect(tracker.list()[0]!.status).toBe("ready-for-verification"); // unchanged
+    expect(d.orchestrator.canAttempt("SCN-001", "verification")).toBe(true); // still 0 attempts used
+  });
 });

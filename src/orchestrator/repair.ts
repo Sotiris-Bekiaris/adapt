@@ -67,18 +67,19 @@ export async function implementWorkItem(
   return { ok: true, item: current, result: outcome.value };
 }
 
-/** Independently verify a fix by rerunning the scenario black-box. Owns the done/reopen decision. */
+/** Independently verify a fix by rerunning the scenario black-box. Owns the done/reopen decision.
+ *  A missing/invalid result is inconclusive: the item is left at ready-for-verification for a later
+ *  retry and no verification attempt is consumed (never a false "still-failing"). */
 export async function verifyWorkItem(
   deps: RepairDeps, item: WorkItem, scenario: ParsedScenario,
-): Promise<{ verified: boolean; item: WorkItem; parked: boolean }> {
+): Promise<{ verified: boolean; item: WorkItem; parked: boolean; inconclusive: boolean }> {
   const { engine, orchestrator, config, targetRepo, sink } = deps;
   const ws = workspacePaths(targetRepo);
   const tracker = new LocalTracker(targetRepo);
 
   if (!orchestrator.canAttempt(item.scenarioId, "verification")) {
-    return { verified: false, item: moveItem(tracker, item, "needs-attention"), parked: true };
+    return { verified: false, item: moveItem(tracker, item, "needs-attention"), parked: true, inconclusive: false };
   }
-  orchestrator.recordAttempt(item.scenarioId, "verification");
 
   const resultPath = join(ws.workItemsDir, `verify-${item.id}.json`);
   const outcome = await runRole(
@@ -92,17 +93,23 @@ export async function verifyWorkItem(
     resultPath, VerificationResultSchema, sink,
   );
 
-  if (outcome.status === "ok" && outcome.value?.verified) {
-    const done = moveItem(tracker, item, "done");
-    orchestrator["store"].setScenarioState(item.scenarioId, "regression");
-    return { verified: true, item: done, parked: false };
+  // Infra failure (no valid verdict): inconclusive — retry next cycle, don't consume an attempt or reopen.
+  if (outcome.status !== "ok" || !outcome.value) {
+    return { verified: false, item, parked: false, inconclusive: true };
   }
 
-  // Still failing (or no valid result): reopen, then park if attempts are now exhausted.
+  orchestrator.recordAttempt(item.scenarioId, "verification");
+
+  if (outcome.value.verified) {
+    const done = moveItem(tracker, item, "done");
+    orchestrator["store"].setScenarioState(item.scenarioId, "regression");
+    return { verified: true, item: done, parked: false, inconclusive: false };
+  }
+
   let current = moveItem(tracker, item, "reopened");
   if (!orchestrator.canAttempt(item.scenarioId, "verification")) {
     current = moveItem(tracker, current, "needs-attention");
-    return { verified: false, item: current, parked: true };
+    return { verified: false, item: current, parked: true, inconclusive: false };
   }
-  return { verified: false, item: current, parked: false };
+  return { verified: false, item: current, parked: false, inconclusive: false };
 }
