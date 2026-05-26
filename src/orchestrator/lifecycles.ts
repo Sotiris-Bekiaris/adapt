@@ -4,7 +4,7 @@ type Transitions<S extends string> = Record<S, S[]>;
 
 // Run lifecycle (blueprint §14)
 export const RUN_TRANSITIONS: Transitions<RunStatus> = {
-  queued: ["running"],
+  queued: ["running", "blocked"],
   running: ["passed", "failed", "blocked", "flaky", "invalid", "inconclusive"],
   passed: ["archived"],
   failed: ["archived"],

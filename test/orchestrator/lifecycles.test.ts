@@ -12,6 +12,10 @@ describe("lifecycle transition tables", () => {
     expect(RUN_TRANSITIONS.inconclusive).toContain("queued");
   });
 
+  it("a run can be blocked before it starts (setup hook failure)", () => {
+    expect(RUN_TRANSITIONS.queued).toContain("blocked");
+  });
+
   it("work-items support the reopen path", () => {
     expect(WORK_ITEM_TRANSITIONS["ready-for-verification"]).toContain("done");
     expect(WORK_ITEM_TRANSITIONS["ready-for-verification"]).toContain("reopened");
