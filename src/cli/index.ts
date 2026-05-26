@@ -24,4 +24,35 @@ program
     await runConsole({ targetRepo, port: Number(options.port) });
   });
 
+program
+  .command("run-scenarios")
+  .description("Run ready scenarios against the target app")
+  .argument("<targetRepo>", "path to the target product repository")
+  .option("--scenario <id>", "run a single scenario by id (e.g. SCN-001)")
+  .action(async (targetRepo: string, options: { scenario?: string }) => {
+    const { runReadyScenariosCmd } = await import("./commands/runScenarios.ts");
+    const res = await runReadyScenariosCmd({ targetRepo, scenarioId: options.scenario });
+    process.exit(res.code);
+  });
+
+program
+  .command("triage-failures")
+  .description("Triage failed runs into deduplicated, classified work-items")
+  .argument("<targetRepo>", "path to the target product repository")
+  .action(async (targetRepo: string) => {
+    const { triageFailuresCmd } = await import("./commands/triageFailures.ts");
+    const res = await triageFailuresCmd({ targetRepo });
+    process.exit(res.code);
+  });
+
+program
+  .command("orchestrate")
+  .description("Run one bounded autonomous pass: validate -> triage -> repair -> verify")
+  .argument("<targetRepo>", "path to the target product repository")
+  .action(async (targetRepo: string) => {
+    const { orchestrateCmd } = await import("./commands/orchestrate.ts");
+    const res = await orchestrateCmd({ targetRepo });
+    process.exit(res.code);
+  });
+
 program.parseAsync(process.argv);
