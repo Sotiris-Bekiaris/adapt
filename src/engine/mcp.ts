@@ -2,7 +2,7 @@ import type { AdaptConfig } from "../config/schema.ts";
 
 export type RoleName =
   | "runner" | "triage" | "implementation" | "verification"
-  | "dreamer" | "critic" | "generator";
+  | "dreamer" | "critic" | "generator" | "graduation";
 
 /**
  * Logical MCP server names to expose to a role, filtered by config toggles.
@@ -16,7 +16,7 @@ export function mcpServersFor(role: RoleName, config: AdaptConfig): string[] {
   const out: string[] = [];
   if (role === "runner" || role === "verification") {
     if (config.mcp.playwright.enabled) out.push("playwright");
-  } else if (role === "triage" || role === "implementation" || role === "dreamer" || role === "generator") {
+  } else if (role === "triage" || role === "implementation" || role === "dreamer" || role === "generator" || role === "graduation") {
     if (config.mcp.chromeDevTools.enabled) out.push("chrome-devtools");
   }
   // critic: no browser.
