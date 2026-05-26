@@ -24,4 +24,15 @@ program
     await runConsole({ targetRepo, port: Number(options.port) });
   });
 
+program
+  .command("run-scenarios")
+  .description("Run ready scenarios against the target app")
+  .argument("<targetRepo>", "path to the target product repository")
+  .option("--scenario <id>", "run a single scenario by id (e.g. SCN-001)")
+  .action(async (targetRepo: string, options: { scenario?: string }) => {
+    const { runReadyScenariosCmd } = await import("./commands/runScenarios.ts");
+    const res = await runReadyScenariosCmd({ targetRepo, scenarioId: options.scenario });
+    process.exit(res.code);
+  });
+
 program.parseAsync(process.argv);
