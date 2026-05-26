@@ -54,6 +54,29 @@ describe("runContinuous", () => {
     expect(sleeps).toBe(0);
   });
 
+  it("stops on wall-clock before pausing between cycles", async () => {
+    const c = setup({ maxCycles: 10, maxWallClockSeconds: 1, pauseSeconds: 5 });
+    const times = [0, 0, 1001];
+    let sleeps = 0;
+    const clockMs = () => times.shift() ?? 1001;
+    const sleep = () => { sleeps++; return Promise.resolve(); };
+    const sum = await runContinuous({ engine: quietEngine(), store: c.store, config: c.config, targetRepo: c.dir, sink: () => {}, emit: () => {}, sleep, clockMs });
+    expect(sum.stoppedBy).toBe("wallClock");
+    expect(sum.cycles).toBe(1);
+    expect(sleeps).toBe(0);
+  });
+
+  it("checks the signal during a long pause", async () => {
+    const c = setup({ maxCycles: 10, pauseSeconds: 5 });
+    const signal = { stopped: false };
+    const sleeps: number[] = [];
+    const sleep = (ms: number) => { sleeps.push(ms); signal.stopped = true; return Promise.resolve(); };
+    const sum = await runContinuous({ engine: quietEngine(), store: c.store, config: c.config, targetRepo: c.dir, sink: () => {}, emit: () => {}, sleep, signal });
+    expect(sum.stoppedBy).toBe("signal");
+    expect(sum.cycles).toBe(1);
+    expect(sleeps[0]).toBeLessThan(5000);
+  });
+
   it("stops after maxConsecutiveErrors", async () => {
     const c = setup({ maxConsecutiveErrors: 1, maxCycles: 10, pauseSeconds: 0 });
     const errs: string[] = [];

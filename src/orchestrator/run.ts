@@ -33,6 +33,28 @@ export async function runContinuous(deps: ContinuousDeps): Promise<ContinuousSum
   const clockMs = deps.clockMs ?? (() => Date.now());
   const sleep = deps.sleep ?? ((ms) => new Promise<void>((res) => setTimeout(res, ms)));
   const startMs = clockMs();
+  const wallClockExceeded = () => (clockMs() - startMs) / 1000 >= r.maxWallClockSeconds;
+  const pauseBetweenCycles = async (): Promise<StopReason | undefined> => {
+    const pauseMs = r.pauseSeconds * 1000;
+    if (pauseMs === 0) {
+      await sleep(0);
+      if (deps.signal?.stopped) return "signal";
+      if (wallClockExceeded()) return "wallClock";
+      return undefined;
+    }
+
+    let remainingMs = pauseMs;
+    while (remainingMs > 0) {
+      if (deps.signal?.stopped) return "signal";
+      if (wallClockExceeded()) return "wallClock";
+      const chunkMs = Math.min(250, remainingMs);
+      await sleep(chunkMs);
+      remainingMs -= chunkMs;
+    }
+    if (deps.signal?.stopped) return "signal";
+    if (wallClockExceeded()) return "wallClock";
+    return undefined;
+  };
 
   const evolveSummaries: EvolveSummary[] = [];
   let cycles = 0;
@@ -41,7 +63,7 @@ export async function runContinuous(deps: ContinuousDeps): Promise<ContinuousSum
   while (true) {
     if (deps.signal?.stopped) return { cycles, stoppedBy: "signal", evolveSummaries };
     if (cycles >= r.maxCycles) return { cycles, stoppedBy: "maxCycles", evolveSummaries };
-    if ((clockMs() - startMs) / 1000 >= r.maxWallClockSeconds) return { cycles, stoppedBy: "wallClock", evolveSummaries };
+    if (wallClockExceeded()) return { cycles, stoppedBy: "wallClock", evolveSummaries };
 
     deps.emit({ type: "cycle.start", at: now(), cycle: cycles + 1 });
     let errored = false;
@@ -64,7 +86,9 @@ export async function runContinuous(deps: ContinuousDeps): Promise<ContinuousSum
       return { cycles, stoppedBy: "errors", evolveSummaries };
     }
     if (cycles >= r.maxCycles) return { cycles, stoppedBy: "maxCycles", evolveSummaries };
+    if (wallClockExceeded()) return { cycles, stoppedBy: "wallClock", evolveSummaries };
     if (deps.signal?.stopped) return { cycles, stoppedBy: "signal", evolveSummaries };
-    await sleep(r.pauseSeconds * 1000);
+    const stoppedBy = await pauseBetweenCycles();
+    if (stoppedBy) return { cycles, stoppedBy, evolveSummaries };
   }
 }
