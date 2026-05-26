@@ -99,7 +99,11 @@ export class Orchestrator {
     const stranded = this.store.findRunsByStatus("running");
     const ids: string[] = [];
     for (const row of stranded) {
-      this.store.upsertRun({ ...row, status: "inconclusive", finishedAt: this.clock() });
+      // Rewrite the ledger file (source of truth, §10) AND re-index the store via ledger.write,
+      // so the two never disagree after recovery.
+      const recovered: RunRecord = { ...this.ledger.read(row.runId), status: "inconclusive", finishedAt: this.clock() };
+      this.ledger.write(recovered);
+      this.records.set(row.runId, recovered);
       this.emit("run.recovered", { runId: row.runId });
       ids.push(row.runId);
     }

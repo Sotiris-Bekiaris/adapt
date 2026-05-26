@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { makeTmpDir, cleanupTmp } from "../helpers/tmp.ts";
 import { Orchestrator } from "../../src/orchestrator/orchestrator.ts";
 import { StateStore } from "../../src/orchestrator/store.ts";
@@ -62,12 +62,16 @@ describe("Orchestrator", () => {
     expect(orch.canAttempt("SCN-001", "fix")).toBe(false);
   });
 
-  it("recovers runs stranded in 'running' as inconclusive", () => {
-    const { orch, store } = make();
+  it("recovers runs stranded in 'running' as inconclusive (store AND ledger file)", () => {
+    const { orch, store, dir } = make();
     const run = orch.createRun("SCN-001", "Login");
     orch.advanceRun(run.runId, "running");
     const recovered = orch.recoverIncomplete();
     expect(recovered).toEqual([run.runId]);
     expect(store.getRun(run.runId)?.status).toBe("inconclusive");
+    // The ledger file is the source of truth (blueprint §10) — it must agree with the store.
+    const ledgerFile = JSON.parse(readFileSync(`${dir}/.adapt/scenario-runs/${run.runId}.json`, "utf8"));
+    expect(ledgerFile.status).toBe("inconclusive");
+    expect(ledgerFile.finishedAt).toBe("2026-05-25T10:15:00.000Z");
   });
 });
