@@ -5,13 +5,8 @@ import { parseStreamLine } from "./parseStream.ts";
 export interface ClaudeCodeEngineOptions {
   command?: string;                              // default "claude"
   argsBuilder?: (spec: AgentSpec) => string[];   // default builds headless stream-json flags
+  skipPermissions?: boolean;                     // default true — pass --dangerously-skip-permissions
   now?: () => string;
-}
-
-function defaultArgs(spec: AgentSpec): string[] {
-  const args = ["-p", spec.prompt, "--output-format", "stream-json", "--verbose"];
-  for (const s of spec.mcpServers ?? []) args.push("--mcp-config", s);
-  return args;
 }
 
 export class ClaudeCodeEngine implements AgentEngine {
@@ -20,8 +15,14 @@ export class ClaudeCodeEngine implements AgentEngine {
   private now: () => string;
 
   constructor(opts: ClaudeCodeEngineOptions = {}) {
+    const skipPermissions = opts.skipPermissions ?? true;
     this.command = opts.command ?? "claude";
-    this.argsBuilder = opts.argsBuilder ?? defaultArgs;
+    this.argsBuilder = opts.argsBuilder ?? ((spec: AgentSpec) => {
+      const args = ["-p", spec.prompt, "--output-format", "stream-json", "--verbose"];
+      if (skipPermissions) args.push("--dangerously-skip-permissions");
+      for (const s of spec.mcpServers ?? []) args.push("--mcp-config", s);
+      return args;
+    });
     this.now = opts.now ?? (() => new Date().toISOString());
   }
 

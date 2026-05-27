@@ -11,6 +11,7 @@ export const AdaptConfigSchema = z.object({
   engine: z.object({
     type: z.enum(["claude-code", "stub"]).default("claude-code"),
     command: z.string().optional(), // override binary/path; defaults set by the engine adapter (Plan 3)
+    skipPermissions: z.boolean().default(true), // pass --dangerously-skip-permissions to Claude Code
   }).default({}),
 
   // Live console (blueprint §11)
