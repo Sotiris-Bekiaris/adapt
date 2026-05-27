@@ -291,8 +291,8 @@
       No human in the loop. You just watch the organism think.
     </p>
     <div class="chips">
-      <span class="chip ok"><span class="dot"></span>Phase 2 — demand engine — complete</span>
-      <span class="chip">155 tests green</span>
+      <span class="chip ok"><span class="dot"></span>Phase 3 — endurance &amp; graduation — complete</span>
+      <span class="chip">184 tests green</span>
       <span class="chip">Node · TypeScript</span>
       <span class="chip">plug into any full-stack app</span>
     </div>
@@ -339,7 +339,7 @@
   <!-- BUILT -->
   <section id="built">
     <div class="sec-head"><span class="sec-num">03</span><h2>What's built</h2></div>
-    <p class="sec-sub">Phases 0–2 are live: the rails + console, the autonomous validate-and-repair spine, and the demand engine that dreams up new work — all running on a stub. 67 tasks, test-driven, every plan independently reviewed by Opus 4.7.</p>
+    <p class="sec-sub">All four phases are live: the rails + console, the autonomous spine, the demand engine that dreams up new work, and the endurance loop that runs it non-stop while graduating proven scenarios into cheap deterministic tests — all on a stub. 83 tasks, test-driven, every plan independently reviewed by Opus 4.7.</p>
     <div class="builds reveal">
       <div class="build">
         <h3>① Workspace &amp; config foundation</h3>
@@ -388,6 +388,15 @@
           <li><b>adapt evolve</b>: dream → critique → generate → then the whole Phase 1 cycle</li>
         </ul>
       </div>
+      <div class="build">
+        <h3>⑥ Endurance &amp; graduation <span style="font-size:13px;color:var(--accent-dim)">— Phase 3</span></h3>
+        <p class="what">The organism runs on its own — and retires what it has proven.</p>
+        <ul>
+          <li><b>adapt run</b>: loop <code style="color:var(--cyan)">evolve</code> until a guardrail (max cycles / wall-clock / consecutive errors) or Ctrl-C</li>
+          <li><b>Graduation</b>: a scenario that passes N times in a row becomes a deterministic Playwright spec — the LLM runner skips it forever</li>
+          <li>Robustness: verifier infra-failures → <em>inconclusive</em>, reopened items re-driven, demands deduped — so a cycle is safe to repeat indefinitely</li>
+        </ul>
+      </div>
     </div>
   </section>
 
@@ -411,6 +420,7 @@
 <span class="p">adapt</span> <span class="a">triage-failures</span> ./my-app  <span class="c"># dedup + file work-items</span>
 <span class="p">adapt</span> <span class="a">orchestrate</span> ./my-app      <span class="c"># one bounded pass: validate → triage → fix → verify</span>
 <span class="p">adapt</span> <span class="a">evolve</span> ./my-app           <span class="c"># the full organism: dream → critique → generate → cycle</span>
+<span class="p">adapt</span> <span class="a">run</span> ./my-app              <span class="c"># non-stop: loop evolve until a guardrail or Ctrl-C</span>
 
 <span class="c"># 4 · watch it think, live</span>
 <span class="p">adapt</span> <span class="a">console</span> ./my-app <span class="o">--port</span> 4399
@@ -445,9 +455,9 @@
         <div class="marker"><span class="ph-id">2</span><span class="ph-state">✓ complete</span></div>
         <div class="body"><h4>Demand engine</h4><p>Dreamer + Critic (adversarial pairing) + source-aware Scenario Generator, wired into <b>adapt evolve</b>. The loop chooses its own work and the Dreamer appends ambition to the north-star — stub-tested.</p></div>
       </div>
-      <div class="phase next">
-        <div class="marker"><span class="ph-id">3</span><span class="ph-state">▶ next</span></div>
-        <div class="body"><h4>Endurance &amp; graduation</h4><p>Long continuous runs, a regression pool, graduating stable scenarios into deterministic Playwright tests, budget &amp; cadence guardrails.</p></div>
+      <div class="phase done">
+        <div class="marker"><span class="ph-id">3</span><span class="ph-state">✓ complete</span></div>
+        <div class="body"><h4>Endurance &amp; graduation</h4><p><b>adapt run</b> loops <b>evolve</b> non-stop under guardrails (max cycles / wall-clock / consecutive errors). Proven scenarios graduate into deterministic Playwright specs and leave the LLM loop; verifier-inconclusive handling, reopened re-drive, and demand dedup make a cycle safe to repeat forever — stub-tested.</p></div>
       </div>
     </div>
   </section>
@@ -457,6 +467,11 @@
     <div class="sec-head"><span class="sec-num">06</span><h2>Build log</h2></div>
     <p class="sec-sub">A living record — every phase appends here. This file is the canonical human-facing history of adapt's own construction.</p>
     <div class="log reveal">
+      <div class="entry">
+        <div class="date">2026 · 05 · 26 — Phase 3 merged</div>
+        <h4>Endurance &amp; graduation land on <code>main</code> — the organism is complete</h4>
+        <p>Three plans — robustness carryovers (verifier-inconclusive, reopened re-drive, demand dedup), graduation (proven scenarios → deterministic Playwright specs, retired from the LLM loop), and <code>adapt run</code> (a bounded continuous <code>evolve</code> loop with guardrails). Opus-reviewed with fixes en route (a gray-matter cache-poisoning bug in the frontmatter writer, guardrail-aware pause, explicit stop). 184 tests passing, typecheck clean. adapt now runs on its own — dream → critique → generate → validate → triage → repair → verify, cycle after cycle, until a guardrail or Ctrl-C. Next: the first real run on a live app.</p>
+      </div>
       <div class="entry">
         <div class="date">2026 · 05 · 26 — Phase 2 merged</div>
         <h4>The demand engine lands on <code>main</code></h4>
