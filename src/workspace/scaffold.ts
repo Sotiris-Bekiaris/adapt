@@ -7,25 +7,6 @@ export interface ScaffoldResult {
   skipped: string[];
 }
 
-const NORTH_STAR_TEMPLATE = `# North Star
-
-> The product vision adapt evolves toward. This file is the "genome" — version it,
-> and watch ambition grow over time. The Dreamer raises this ceiling (Phase 2);
-> for now (Phase 1) you seed it by hand.
-
-## Vision
-
-_Describe what this product should become and for whom._
-
-## Goals
-
-- _A measurable, user-visible goal._
-
-## Constraints
-
-- _What the organism must never break or violate._
-`;
-
 const EXAMPLE_SCENARIO = `---
 id: SCN-001
 title: A user can log in
@@ -90,7 +71,6 @@ export function scaffoldWorkspace(targetRepo: string, appBaseUrl: string): Scaff
 
   writeIfAbsent(`${p.root}/config.example.json`,
     JSON.stringify(defaultConfig(p.targetRepo, appBaseUrl), null, 2) + "\n", res);
-  writeIfAbsent(p.northStar, NORTH_STAR_TEMPLATE, res);
   writeIfAbsent(`${examplesDir}/example.login.md`, EXAMPLE_SCENARIO, res);
 
   return res;
