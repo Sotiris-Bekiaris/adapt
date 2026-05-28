@@ -63,7 +63,7 @@ export async function startLaneLoop(opts: StartLaneLoopOptions): Promise<number>
     const { runCmd, requestRunStop } = await import("../cli/commands/run.ts");
     const signal = { stopped: false };
     process.on("SIGINT", () => { if (!requestRunStop(signal)) process.exit(130); });
-    const res = await runCmd({ targetRepo: target, signal });
+    const res = await runCmd({ targetRepo: target, signal, consolePort: manifest.consolePort });
     return res.code;
   });
   // Touch laneEnv so the namespace is part of this process too (parity with detached env).

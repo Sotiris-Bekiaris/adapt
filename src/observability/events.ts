@@ -9,6 +9,7 @@ export interface ConsoleEvent {
   text?: string;
   tool?: string;
   data?: unknown;
+  lane?: string;
 }
 
 export function fromAgentEvent(e: AgentEvent): ConsoleEvent {

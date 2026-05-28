@@ -156,4 +156,14 @@ lane
     process.exit(laneDestroyCmd({ targetRepo, laneId }).code);
   });
 
+program
+  .command("monitor")
+  .description("Watch all lanes live in one dashboard")
+  .argument("<targetRepo>", "path to the target product repository")
+  .option("--port <port>", "port to serve on", "4500")
+  .action(async (targetRepo, options) => {
+    const { runMonitor } = await import("./commands/monitor.ts");
+    await runMonitor({ targetRepo, port: Number(options.port) });
+  });
+
 program.parseAsync(process.argv);

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>adapt · multi-lane console</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .page { display: flex; height: calc(100vh - 44px); }
+      #lanes {
+        width: 260px;
+        flex: 0 0 260px;
+        background: #0d1018;
+        border-right: 1px solid #1f2430;
+        overflow-y: auto;
+        padding: .4rem 0;
+      }
+      #lanes .lanes-h {
+        font-size: 11px;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: #6c7086;
+        padding: .3rem .8rem .5rem;
+      }
+      .lane {
+        padding: .45rem .8rem;
+        cursor: pointer;
+        border-bottom: 1px dotted #1b2230;
+        display: flex;
+        flex-direction: column;
+        gap: .15rem;
+      }
+      .lane:hover { background: #11151f; }
+      .lane.active { background: #1b2230; border-left: 2px solid #89b4fa; padding-left: calc(.8rem - 2px); }
+      .lane .lane-top { display: flex; align-items: center; gap: .4rem; }
+      .lane .dot { font-size: 11px; }
+      .lane.running .dot { color: #a6e3a1; }
+      .lane.stopped .dot { color: #6c7086; }
+      .lane .lane-id { color: #cdd6f4; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .lane .lane-meta { font-size: 11px; color: #6c7086; padding-left: 1.1rem; }
+      .lane .lane-model { color: #cba6f7; }
+      .lane .lane-cycle { color: #f9e2af; }
+      .focus-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+      #focus-header {
+        display: flex;
+        align-items: center;
+        gap: .8rem;
+        padding: .5rem 1rem;
+        background: #11151f;
+        border-bottom: 1px solid #1f2430;
+        font-size: 12px;
+      }
+      #focus-header .fh-id { color: #89b4fa; font-weight: 600; }
+      #focus-header .fh-status.running { color: #a6e3a1; }
+      #focus-header .fh-status.stopped { color: #6c7086; }
+      #focus-header .fh-cycle { color: #f9e2af; }
+      #focus-header .fh-empty { color: #6c7086; }
+      .focus-body { display: grid; grid-template-columns: 1fr 320px; flex: 1; min-height: 0; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>adapt · multi-lane console</h1>
+      <span id="status" class="disconnected">connecting…</span>
+    </header>
+    <div class="page">
+      <nav id="lanes">
+        <div class="lanes-h">lanes</div>
+      </nav>
+      <div class="focus-main">
+        <div id="focus-header"><span class="fh-empty">no lane focused</span></div>
+        <div class="focus-body">
+          <section id="agents" class="agents"></section>
+          <aside id="timeline" class="timeline">
+            <h2>decision timeline</h2>
+            <ol id="timeline-list"></ol>
+          </aside>
+        </div>
+      </div>
+    </div>
+    <script src="/monitor.js"></script>
+  </body>
+</html>

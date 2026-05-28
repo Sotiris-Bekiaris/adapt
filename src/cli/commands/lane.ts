@@ -21,7 +21,7 @@ export function laneCreateCmd(
     code: createLane({
       targetRepo: opts.targetRepo, laneId: opts.laneId, baseline: opts.baseline,
       model: opts.model ?? null, lanesRoot: lanesRootFor(opts.targetRepo, s.lanesRoot),
-      portBase: s.portBase, portStride: s.portStride,
+      portBase: s.portBase, portStride: s.portStride, consolePortBase: s.consolePortBase,
       envUp: s.envUp, envReset: s.envReset,
     }, log),
   };

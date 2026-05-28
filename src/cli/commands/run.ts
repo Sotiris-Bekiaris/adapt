@@ -8,6 +8,7 @@ import { runContinuous, type ContinuousSummary } from "../../orchestrator/run.ts
 import { EventBus } from "../../observability/eventBus.ts";
 import { DecisionLog } from "../../observability/decisionLog.ts";
 import { fromAgentEvent, fromOrchestratorEvent, type ConsoleEvent } from "../../observability/events.ts";
+import { ObservabilityServer } from "../../observability/server.ts";
 import { readLaneManifest } from "../../lanes/lane.ts";
 
 export interface RunCmdOptions {
@@ -15,6 +16,7 @@ export interface RunCmdOptions {
   engine?: AgentEngine;
   log?: (msg: string) => void;
   signal?: { stopped: boolean };
+  consolePort?: number;
 }
 
 export interface RunCmdResult { code: number; summary: ContinuousSummary; }
@@ -41,10 +43,14 @@ export async function runCmd(opts: RunCmdOptions): Promise<RunCmdResult> {
     : new ClaudeCodeEngine({ command: config.engine.command, model: laneModelFor(opts.targetRepo) }));
   const store = new StateStore(`${ws.root}/state.db`);
 
+  let obsServer: ObservabilityServer | undefined;
   try {
     const bus = new EventBus<ConsoleEvent>();
     const decisionLog = new DecisionLog(opts.targetRepo);
     bus.subscribe((e) => decisionLog.append(e));
+
+    obsServer = opts.consolePort ? new ObservabilityServer(bus) : undefined;
+    if (obsServer) await obsServer.start(opts.consolePort!);
 
     const summary = await runContinuous({
       engine, store, config, targetRepo: opts.targetRepo,
@@ -56,6 +62,7 @@ export async function runCmd(opts: RunCmdOptions): Promise<RunCmdResult> {
     log(`run: ${summary.cycles} cycle(s), stopped by ${summary.stoppedBy}`);
     return { code: 0, summary };
   } finally {
+    if (obsServer) await obsServer.stop();
     store.close();
   }
 }

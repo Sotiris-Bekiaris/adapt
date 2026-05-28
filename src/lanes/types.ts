@@ -12,5 +12,6 @@ export interface LaneManifest {
   branch: string;
   composeProject: string;
   ports: { base: number; stride: number };
+  consolePort: number;
   createdAt: string;
 }

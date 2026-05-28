@@ -12,7 +12,7 @@ import { spawnSync } from "node:child_process";
 import { workspacePaths } from "../workspace/paths.ts";
 import type { LaneManifest } from "./types.ts";
 import { addWorktree, tagExists, resetHard, removeWorktree, deleteBranch } from "./git.ts";
-import { allocatePortBase } from "./ports.ts";
+import { allocatePortBase, slotIndex } from "./ports.ts";
 import type { AdaptConfig } from "../config/schema.ts";
 
 /** Read <worktree>/.adapt/lane.json, or null if it does not exist. */
@@ -75,6 +75,7 @@ export interface CreateLaneOptions {
   lanesRoot: string;
   portBase: number;
   portStride: number;
+  consolePortBase: number;
   /** Target-supplied env commands (from config.environment); optional. */
   envUp?: string;
   envReset?: string;
@@ -101,6 +102,7 @@ export function createLane(opts: CreateLaneOptions, log: (msg: string) => void =
 
   const existing = listLanes(opts.lanesRoot);
   const portBase = allocatePortBase(existing.map((l) => l.ports.base), opts.portBase, opts.portStride);
+  const consolePort = opts.consolePortBase + slotIndex(portBase, opts.portBase, opts.portStride);
 
   if (!existsSync(opts.lanesRoot)) mkdirSync(opts.lanesRoot, { recursive: true });
   const branch = `adapt/${opts.laneId}`;
@@ -112,6 +114,7 @@ export function createLane(opts: CreateLaneOptions, log: (msg: string) => void =
   const manifest: LaneManifest = {
     laneId: opts.laneId, baseline: opts.baseline, model: opts.model, branch,
     composeProject: `adapt-${opts.laneId}`, ports: { base: portBase, stride: opts.portStride },
+    consolePort,
     createdAt: now(),
   };
   writeLaneManifest(worktree, manifest);
@@ -132,12 +135,13 @@ export function createLane(opts: CreateLaneOptions, log: (msg: string) => void =
 
 /** Resolve env commands + lane root + port settings from a loaded config. */
 export function laneSettingsFromConfig(config: AdaptConfig): {
-  lanesRoot: string; portBase: number; portStride: number; envUp?: string; envDown?: string; envReset?: string;
+  lanesRoot: string; portBase: number; portStride: number; consolePortBase: number; envUp?: string; envDown?: string; envReset?: string;
 } {
   return {
     lanesRoot: config.lanes.rootDir,
     portBase: config.environment?.portBase ?? 54300,
     portStride: config.environment?.portStride ?? 100,
+    consolePortBase: config.console.port,
     envUp: config.environment?.up,
     envDown: config.environment?.down,
     envReset: config.environment?.reset,
