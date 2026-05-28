@@ -79,4 +79,81 @@ program
     process.exit(res.code);
   });
 
+const baseline = program.command("baseline").description("Manage baselines (shared fork points)");
+baseline
+  .command("create")
+  .description("Tag the current target state as a named baseline")
+  .argument("<name>", "baseline name (e.g. v1)")
+  .argument("<targetRepo>", "path to the target product repository")
+  .action(async (name: string, targetRepo: string) => {
+    const { baselineCreateCmd } = await import("./commands/baseline.ts");
+    process.exit(baselineCreateCmd({ targetRepo, name }).code);
+  });
+baseline
+  .command("list")
+  .description("List baselines")
+  .argument("<targetRepo>", "path to the target product repository")
+  .action(async (targetRepo: string) => {
+    const { baselineListCmd } = await import("./commands/baseline.ts");
+    process.exit(baselineListCmd({ targetRepo }).code);
+  });
+
+const lane = program.command("lane").description("Manage lanes (parallel evolutionary lineages)");
+lane
+  .command("create")
+  .description("Fork a baseline into a new isolated lane")
+  .argument("<laneId>", "lane id (lowercase, digits, hyphens)")
+  .argument("<targetRepo>", "path to the target product repository")
+  .requiredOption("--baseline <name>", "baseline to fork from")
+  .option("--model <model>", "model to drive this lane's loop")
+  .action(async (laneId: string, targetRepo: string, options: { baseline: string; model?: string }) => {
+    const { laneCreateCmd } = await import("./commands/lane.ts");
+    process.exit(laneCreateCmd({ targetRepo, laneId, baseline: options.baseline, model: options.model }).code);
+  });
+lane
+  .command("list")
+  .description("List lanes")
+  .argument("<targetRepo>", "path to the target product repository")
+  .action(async (targetRepo: string) => {
+    const { laneListCmd } = await import("./commands/lane.ts");
+    process.exit(laneListCmd({ targetRepo }).code);
+  });
+lane
+  .command("start")
+  .description("Start (and maintain) a lane's autonomous loop")
+  .argument("<laneId>", "lane id")
+  .argument("<targetRepo>", "path to the target product repository")
+  .option("--detach", "run the loop in the background", false)
+  .action(async (laneId: string, targetRepo: string, options: { detach: boolean }) => {
+    const { laneStartCmd } = await import("./commands/lane.ts");
+    process.exit((await laneStartCmd({ targetRepo, laneId, detach: options.detach })).code);
+  });
+lane
+  .command("stop")
+  .description("Stop a lane's background loop")
+  .argument("<laneId>", "lane id")
+  .argument("<targetRepo>", "path to the target product repository")
+  .action(async (laneId: string, targetRepo: string) => {
+    const { laneStopCmd } = await import("./commands/lane.ts");
+    process.exit(laneStopCmd({ targetRepo, laneId }).code);
+  });
+lane
+  .command("reset")
+  .description("Discard a lane's work and restore it to its baseline")
+  .argument("<laneId>", "lane id")
+  .argument("<targetRepo>", "path to the target product repository")
+  .action(async (laneId: string, targetRepo: string) => {
+    const { laneResetCmd } = await import("./commands/lane.ts");
+    process.exit(laneResetCmd({ targetRepo, laneId }).code);
+  });
+lane
+  .command("destroy")
+  .description("Remove a lane (worktree + branch)")
+  .argument("<laneId>", "lane id")
+  .argument("<targetRepo>", "path to the target product repository")
+  .action(async (laneId: string, targetRepo: string) => {
+    const { laneDestroyCmd } = await import("./commands/lane.ts");
+    process.exit(laneDestroyCmd({ targetRepo, laneId }).code);
+  });
+
 program.parseAsync(process.argv);

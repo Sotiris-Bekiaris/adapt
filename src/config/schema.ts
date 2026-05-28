@@ -64,6 +64,21 @@ export const AdaptConfigSchema = z.object({
     pauseSeconds: z.number().int().nonnegative().default(5),
     maxConsecutiveErrors: z.number().int().positive().default(3),
   }).default({}),
+
+  // Environment orchestration for lanes (Spec: baselines & lanes).
+  // Optional — absent means lanes are git-only (no env bring-up/reset).
+  environment: z.object({
+    up: z.string().optional(),
+    down: z.string().optional(),
+    reset: z.string().optional(),
+    portBase: z.number().int().positive().default(54300),
+    portStride: z.number().int().positive().default(100),
+  }).optional(),
+
+  // Where lane worktrees are created.
+  lanes: z.object({
+    rootDir: z.string().default("../adapt-lanes"),
+  }).default({}),
 });
 
 export type AdaptConfig = z.infer<typeof AdaptConfigSchema>;

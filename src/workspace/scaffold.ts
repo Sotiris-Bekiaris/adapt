@@ -46,6 +46,15 @@ As a returning user, log in with valid credentials and land on the home page.
 - The browser console shows an uncaught error.
 `;
 
+const WORKSPACE_GITIGNORE = `# adapt runtime files — not part of a baseline
+state.db
+state.db-wal
+state.db-shm
+lane.json
+loop.pid
+scenario-runs/
+`;
+
 function ensureDir(path: string, res: ScaffoldResult) {
   if (existsSync(path)) { res.skipped.push(path); return; }
   mkdirSync(path, { recursive: true });
@@ -72,6 +81,7 @@ export function scaffoldWorkspace(targetRepo: string, appBaseUrl: string): Scaff
   writeIfAbsent(`${p.root}/config.example.json`,
     JSON.stringify(defaultConfig(p.targetRepo, appBaseUrl), null, 2) + "\n", res);
   writeIfAbsent(`${examplesDir}/example.login.md`, EXAMPLE_SCENARIO, res);
+  writeIfAbsent(`${p.root}/.gitignore`, WORKSPACE_GITIGNORE, res);
 
   return res;
 }

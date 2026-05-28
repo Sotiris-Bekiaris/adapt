@@ -4,9 +4,20 @@ import { parseStreamLine } from "./parseStream.ts";
 
 export interface ClaudeCodeEngineOptions {
   command?: string;                              // default "claude"
+  model?: string;                                // optional --model (per-lane)
   argsBuilder?: (spec: AgentSpec) => string[];   // default builds headless stream-json flags
   skipPermissions?: boolean;                     // default true — pass --dangerously-skip-permissions
   now?: () => string;
+}
+
+/** Build the claude CLI args for a spec. Exported for testing. */
+export function buildClaudeArgs(spec: AgentSpec, opts: { model?: string; skipPermissions: boolean }): string[] {
+  const args: string[] = [];
+  if (opts.model) args.push("--model", opts.model);
+  args.push("-p", spec.prompt, "--output-format", "stream-json", "--verbose");
+  if (opts.skipPermissions) args.push("--dangerously-skip-permissions");
+  for (const s of spec.mcpServers ?? []) args.push("--mcp-config", s);
+  return args;
 }
 
 export class ClaudeCodeEngine implements AgentEngine {
@@ -17,12 +28,8 @@ export class ClaudeCodeEngine implements AgentEngine {
   constructor(opts: ClaudeCodeEngineOptions = {}) {
     const skipPermissions = opts.skipPermissions ?? true;
     this.command = opts.command ?? "claude";
-    this.argsBuilder = opts.argsBuilder ?? ((spec: AgentSpec) => {
-      const args = ["-p", spec.prompt, "--output-format", "stream-json", "--verbose"];
-      if (skipPermissions) args.push("--dangerously-skip-permissions");
-      for (const s of spec.mcpServers ?? []) args.push("--mcp-config", s);
-      return args;
-    });
+    this.argsBuilder = opts.argsBuilder ?? ((spec: AgentSpec) =>
+      buildClaudeArgs(spec, { model: opts.model, skipPermissions }));
     this.now = opts.now ?? (() => new Date().toISOString());
   }
 

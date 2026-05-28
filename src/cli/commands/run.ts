@@ -8,6 +8,7 @@ import { runContinuous, type ContinuousSummary } from "../../orchestrator/run.ts
 import { EventBus } from "../../observability/eventBus.ts";
 import { DecisionLog } from "../../observability/decisionLog.ts";
 import { fromAgentEvent, fromOrchestratorEvent, type ConsoleEvent } from "../../observability/events.ts";
+import { readLaneManifest } from "../../lanes/lane.ts";
 
 export interface RunCmdOptions {
   targetRepo: string;
@@ -25,12 +26,19 @@ export function requestRunStop(signal: { stopped: boolean }, log: (msg: string) 
   return true;
 }
 
+/** The model to drive a run with, from the lane manifest in the target worktree (if any). */
+export function laneModelFor(targetRepo: string): string | undefined {
+  return readLaneManifest(targetRepo)?.model ?? undefined;
+}
+
 /** Core of `adapt run`: the bounded continuous loop, events mirrored to the decision log. */
 export async function runCmd(opts: RunCmdOptions): Promise<RunCmdResult> {
   const log = opts.log ?? console.log;
   const config = loadConfig(opts.targetRepo);
   const ws = workspacePaths(opts.targetRepo);
-  const engine = opts.engine ?? (config.engine.type === "stub" ? new StubEngine() : new ClaudeCodeEngine({ command: config.engine.command }));
+  const engine = opts.engine ?? (config.engine.type === "stub"
+    ? new StubEngine()
+    : new ClaudeCodeEngine({ command: config.engine.command, model: laneModelFor(opts.targetRepo) }));
   const store = new StateStore(`${ws.root}/state.db`);
 
   try {

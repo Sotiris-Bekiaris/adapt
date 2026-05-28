@@ -13,6 +13,8 @@ export interface WorkspacePaths {
   verificationReportsDir: string;
   decisionLogDir: string;
   demandsDir: string;
+  baselinesDir: string;
+  laneManifest: string;
 }
 
 /** Resolve every workspace path from a target repo directory. Pure — no IO. */
@@ -32,5 +34,7 @@ export function workspacePaths(targetRepo: string): WorkspacePaths {
     verificationReportsDir: join(root, "verification-reports"),
     decisionLogDir: join(root, "decision-log"),
     demandsDir: join(root, "demands"),
+    baselinesDir: join(root, "baselines"),
+    laneManifest: join(root, "lane.json"),
   };
 }
