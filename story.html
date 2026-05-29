@@ -1,0 +1,984 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>adapt — watch a product evolve like an organism</title>
+<meta name="description" content="An interactive, scroll-driven story of adapt: a closed loop of coding agents that decides what to build, what to fix, and evolves a real product over many cycles — with no human in the loop." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..700&family=JetBrains+Mono:ital,wght@0,400..700;1,400..600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #090c11;
+    --ink-2: #0e131a;
+    --panel: #11171f;
+    --line: #1d2632;
+    --line-2: #2a3849;
+    --text: #cdd8e4;
+    --muted: #75869a;
+    --faint: #4a586a;
+    --accent: #b8ff35;      /* bioluminescent lime — "alive / active" */
+    --accent-dim: #7ea827;
+    --amber: #ffb454;       /* secondary — pending / caution */
+    --mauve: #cbacff;
+    --cyan: #6fe0d0;
+    --display: "Fraunces", Georgia, serif;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 15px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Blueprint grid + atmospheric glow + grain */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 46px 46px;
+    -webkit-mask-image: radial-gradient(ellipse 100% 80% at 50% 30%, #000 0%, transparent 82%);
+            mask-image: radial-gradient(ellipse 100% 80% at 50% 30%, #000 0%, transparent 82%);
+    opacity: .3;
+    z-index: -2;
+    pointer-events: none;
+  }
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(60rem 44rem at 80% 4%, rgba(184,255,53,.075), transparent 60%),
+      radial-gradient(54rem 44rem at 4% 30%, rgba(203,172,255,.055), transparent 55%),
+      radial-gradient(50rem 40rem at 60% 100%, rgba(111,224,208,.05), transparent 58%);
+    z-index: -2;
+    pointer-events: none;
+  }
+  .grain {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .045;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+  /* ---------- stage label (fixed) ---------- */
+  .stage {
+    position: fixed; top: 22px; left: 28px; z-index: 30;
+    font-size: 11px; letter-spacing: .26em; text-transform: uppercase; color: var(--muted);
+    display: flex; align-items: center; gap: 11px;
+    background: rgba(9,12,17,.55); backdrop-filter: blur(8px);
+    border: 1px solid var(--line); border-radius: 999px; padding: 7px 15px;
+    transition: opacity .5s ease;
+  }
+  .stage .brand { font-family: var(--display); font-weight: 800; letter-spacing: 0; text-transform: none; font-size: 15px; color: var(--text); }
+  .stage .brand b { color: var(--accent); }
+  .stage .div { width: 1px; height: 13px; background: var(--line-2); }
+  .stage #stageLabel { color: var(--accent-dim); min-width: 11ch; transition: color .4s ease; }
+
+  /* ---------- progress rail (fixed right) ---------- */
+  .rail {
+    position: fixed; top: 50%; right: 26px; transform: translateY(-50%); z-index: 30;
+    display: flex; flex-direction: column; gap: 14px; align-items: center;
+  }
+  .rail .tick {
+    width: 9px; height: 9px; border-radius: 50%;
+    border: 1px solid var(--line-2); background: transparent;
+    cursor: pointer; position: relative; transition: all .35s cubic-bezier(.2,.7,.2,1);
+  }
+  .rail .tick::after {
+    content: attr(data-label);
+    position: absolute; right: 18px; top: 50%; transform: translateY(-50%) translateX(6px);
+    font-size: 10.5px; letter-spacing: .08em; color: var(--muted); white-space: nowrap;
+    opacity: 0; pointer-events: none; transition: opacity .25s ease, transform .25s ease;
+    background: rgba(9,12,17,.85); padding: 2px 8px; border-radius: 5px; border: 1px solid var(--line);
+  }
+  .rail .tick:hover::after { opacity: 1; transform: translateY(-50%) translateX(0); }
+  .rail .tick.active {
+    background: var(--accent); border-color: var(--accent);
+    box-shadow: 0 0 12px rgba(184,255,53,.7); transform: scale(1.25);
+  }
+  .rail .tick.past { background: var(--accent-dim); border-color: var(--accent-dim); }
+  @media (max-width: 980px){ .rail { right: 12px; gap: 11px; } .rail .tick::after { display:none; } }
+
+  /* ---------- hero ---------- */
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column; justify-content: center;
+    padding: 0 6vw; position: relative;
+  }
+  .hero .eyebrow {
+    font-size: 12px; letter-spacing: .42em; text-transform: uppercase; color: var(--accent-dim);
+    display: flex; align-items: center; gap: 14px; margin-bottom: 30px; max-width: 640px;
+  }
+  .hero .eyebrow::after { content:""; height:1px; flex:1; background: linear-gradient(90deg, var(--line-2), transparent); }
+  h1.title {
+    font-family: var(--display); font-weight: 800;
+    font-size: clamp(78px, 21vw, 280px); line-height: .8; letter-spacing: -.045em;
+    margin: 0; color: var(--text);
+  }
+  h1.title em { font-style: italic; font-weight: 300; color: var(--accent); }
+  .hero .tagline {
+    font-family: var(--display); font-style: italic; font-weight: 400;
+    font-size: clamp(22px, 4vw, 40px); line-height: 1.2; letter-spacing: -.01em;
+    margin: 26px 0 0; color: var(--text); max-width: 22ch;
+  }
+  .hero .tagline b { font-style: normal; font-weight: 700; color: var(--accent); }
+  .hero .subline {
+    margin: 26px 0 0; max-width: 56ch; color: var(--muted); font-size: 15px; line-height: 1.75;
+  }
+  .hero .subline b { color: var(--text); font-weight: 400; }
+  .scrollcue {
+    margin-top: 46px; font-size: 11.5px; letter-spacing: .26em; text-transform: uppercase;
+    color: var(--faint); display: inline-flex; align-items: center; gap: 12px;
+  }
+  .scrollcue .arrow {
+    display: inline-block; color: var(--accent);
+    animation: bob 1.9s ease-in-out infinite;
+  }
+  @keyframes bob { 0%,100%{ transform: translateY(0); opacity:.5; } 50%{ transform: translateY(6px); opacity:1; } }
+
+  .hero .expand {
+    position: absolute; bottom: 40px; left: 6vw; right: 6vw;
+    font-size: 11.5px; letter-spacing: .14em; color: var(--faint); text-transform: uppercase;
+    border-top: 1px solid var(--line); padding-top: 16px;
+    display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  .hero .expand b { color: var(--accent-dim); font-weight: 700; }
+
+  /* ---------- scrolly section ---------- */
+  .scrolly { position: relative; max-width: 1240px; margin: 0 auto; padding: 0 6vw; }
+  .scrolly .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7vw; align-items: stretch; }
+
+  /* LEFT: narration */
+  .narration { padding: 0; }
+  .beat {
+    min-height: 92vh; display: flex; flex-direction: column; justify-content: center;
+    padding: 8vh 0;
+  }
+  .beat .kicker {
+    font-size: 11.5px; letter-spacing: .26em; text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: 10px; margin-bottom: 18px;
+    color: var(--accent-dim);
+  }
+  .beat .kicker .num {
+    font-family: var(--display); font-size: 13px; font-weight: 700; color: var(--accent);
+    border: 1px solid var(--line-2); border-radius: 50%; width: 26px; height: 26px;
+    display: inline-flex; align-items: center; justify-content: center; line-height: 1;
+  }
+  .beat h2 {
+    font-family: var(--display); font-weight: 600;
+    font-size: clamp(30px, 4.6vw, 52px); line-height: 1.04; letter-spacing: -.025em;
+    margin: 0 0 22px; color: var(--text);
+  }
+  .beat h2 em { font-style: italic; color: var(--accent); font-weight: 400; }
+  .beat p { color: var(--text); margin: 0 0 16px; max-width: 46ch; font-size: 15.5px; line-height: 1.78; }
+  .beat p.lead { font-size: 17px; }
+  .beat p strong { color: var(--accent); font-weight: 600; }
+  .beat p .am { color: var(--amber); }
+  .beat p .cy { color: var(--cyan); }
+  .beat p .mv { color: var(--mauve); }
+  .beat .meta {
+    margin-top: 22px; display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .beat .pill {
+    font-size: 10.5px; letter-spacing: .07em; padding: 5px 11px; border-radius: 999px;
+    border: 1px solid var(--line-2); color: var(--muted); background: var(--ink-2);
+  }
+  .beat .pill b { color: var(--accent); font-weight: 600; }
+  .beat .pill.warn b { color: var(--amber); }
+  .beat blockquote {
+    margin: 6px 0 0; border-left: 2px solid var(--accent); padding: 4px 0 4px 20px;
+    font-family: var(--display); font-style: italic; font-size: clamp(19px,2.6vw,26px);
+    line-height: 1.35; color: var(--text);
+  }
+  .beat blockquote b { font-style: normal; color: var(--accent); }
+
+  /* RIGHT: pinned visual */
+  .visual-col { position: relative; }
+  .pin {
+    position: sticky; top: 0; height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .viz {
+    width: 100%; max-width: 540px; aspect-ratio: 1 / 1; position: relative;
+  }
+  .viz svg { width: 100%; height: 100%; display: block; overflow: visible; }
+
+  .viz .caption {
+    position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint);
+    white-space: nowrap; transition: color .4s ease;
+  }
+
+  /* ---------- SVG node styling ---------- */
+  .ring-bg { fill: none; stroke: var(--line); stroke-width: 1; }
+  .edge { fill: none; stroke: var(--line-2); stroke-width: 1.4; transition: stroke .5s ease, opacity .5s ease; opacity: .5; }
+  .edge.lit { stroke: var(--accent-dim); opacity: 1; }
+  .spoke { stroke: var(--line); stroke-width: 1; opacity: .4; transition: opacity .5s, stroke .5s; }
+  .spoke.lit { stroke: var(--accent-dim); opacity: .85; }
+
+  .node-g { cursor: default; transition: opacity .5s ease; }
+  .node-g .halo { fill: var(--accent); opacity: 0; transition: opacity .55s ease; filter: blur(7px); }
+  .node-g .disc {
+    fill: var(--ink-2); stroke: var(--line-2); stroke-width: 1.4;
+    transition: stroke .45s ease, fill .45s ease;
+  }
+  .node-g .ord { fill: var(--faint); transition: fill .45s ease; }
+  .node-g .lbl {
+    fill: var(--muted); font-family: var(--mono); font-size: 10px; letter-spacing: .04em;
+    text-anchor: middle; transition: fill .45s ease;
+  }
+  .node-g.dim { opacity: .32; }
+  .node-g.active .halo { opacity: .55; }
+  .node-g.active .disc { fill: #14210a; stroke: var(--accent); stroke-width: 1.8; }
+  .node-g.active .ord { fill: var(--accent); }
+  .node-g.active .lbl { fill: var(--accent); font-weight: 600; }
+  .node-g.visited .disc { stroke: var(--accent-dim); }
+  .node-g.visited .ord { fill: var(--accent-dim); }
+
+  /* core / orchestrator */
+  .core .core-ring { fill: none; stroke: var(--line-2); stroke-width: 1; transition: stroke .5s; }
+  .core .core-disc { fill: #0c1118; stroke: var(--line-2); stroke-width: 1.6; transition: stroke .5s, fill .5s; }
+  .core .core-lbl { fill: var(--muted); font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-anchor: middle; text-transform: uppercase; }
+  .core .core-sub { fill: var(--faint); font-family: var(--mono); font-size: 7.5px; letter-spacing: .1em; text-anchor: middle; }
+  .core.beating .core-disc { stroke: var(--accent); fill: #101a0a; }
+  .core.beating .core-ring { stroke: var(--accent-dim); }
+  .core.beating .core-lbl { fill: var(--accent); }
+
+  /* the travelling pulse */
+  #pulse { fill: var(--accent); filter: drop-shadow(0 0 6px rgba(184,255,53,.9)); opacity: 0; }
+  #pulse.show { opacity: 1; }
+
+  @keyframes corePulse {
+    0%,100% { r: 46; opacity:.0; } 50% { r: 64; opacity:.5; }
+  }
+  .core .pulse-halo { fill: var(--accent); opacity: 0; }
+  .core.beating .pulse-halo { animation: corePulse 2.6s ease-in-out infinite; }
+
+  /* spinning state for the "whole loop" + lanes */
+  .ring-rotor { transform-box: fill-box; transform-origin: center; }
+  .spin .ring-rotor { animation: spin 26s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* lanes overlay */
+  .lanes { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 4%; opacity: 0; transition: opacity .6s ease; pointer-events: none; }
+  .lanes.show { opacity: 1; }
+  .lane { width: 30%; max-width: 150px; aspect-ratio: 1/1; }
+  .lane svg { width: 100%; height: 100%; overflow: visible; }
+  .lane .lring { fill: none; stroke-width: 1.4; }
+  .lane .lnode { stroke-width: 1; }
+  .lane .lcore { }
+  .lane .ltag { font-family: var(--mono); font-size: 8px; letter-spacing: .12em; text-anchor: middle; text-transform: uppercase; }
+  .lane.l1 .lring { stroke: var(--accent-dim); } .lane.l1 .lnode { fill:#14210a; stroke: var(--accent); } .lane.l1 .lcore{ fill:var(--accent);} .lane.l1 .ltag{ fill: var(--accent); }
+  .lane.l2 .lring { stroke: #7a5fb0; } .lane.l2 .lnode { fill:#1a1426; stroke: var(--mauve);} .lane.l2 .lcore{ fill:var(--mauve);} .lane.l2 .ltag{ fill: var(--mauve); }
+  .lane.l3 .lring { stroke: #3f8a80; } .lane.l3 .lnode { fill:#0c1c1a; stroke: var(--cyan);} .lane.l3 .lcore{ fill:var(--cyan);} .lane.l3 .ltag{ fill: var(--cyan); }
+  .lane .lpulse { }
+  .baseline-tag {
+    position:absolute; top: 14%; left:50%; transform: translateX(-50%);
+    font-size: 10px; letter-spacing:.2em; text-transform:uppercase; color: var(--faint);
+    opacity:0; transition: opacity .6s ease;
+  }
+  .lanes.show ~ .baseline-tag { opacity: 1; }
+
+  /* console overlay */
+  .console-ov {
+    position: absolute; inset: 4%; border-radius: 12px; overflow: hidden;
+    background: #07090d; border: 1px solid var(--line-2);
+    box-shadow: 0 30px 70px -36px rgba(0,0,0,.95);
+    opacity: 0; transform: scale(.96); transition: opacity .6s ease, transform .6s ease;
+    pointer-events: none; display: flex; flex-direction: column;
+  }
+  .console-ov.show { opacity: 1; transform: none; }
+  .console-ov .cbar { display:flex; align-items:center; gap:7px; padding:9px 13px; border-bottom:1px solid var(--line); background:#0b0f15; flex: none; }
+  .console-ov .cbar i { width:10px; height:10px; border-radius:50%; }
+  .console-ov .cbar i:nth-child(1){background:#ff5f57;} .console-ov .cbar i:nth-child(2){background:#febc2e;} .console-ov .cbar i:nth-child(3){background:#28c840;}
+  .console-ov .cbar span { margin-left:8px; font-size:10.5px; color: var(--faint); letter-spacing:.06em; }
+  .console-ov .clog { padding: 14px 16px; font-size: 11.5px; line-height: 1.65; overflow: hidden; flex: 1; }
+  .console-ov .row { opacity: 0; }
+  .console-ov.show .row { animation: rowIn .4s ease forwards; }
+  @keyframes rowIn { from { opacity:0; transform: translateY(5px);} to { opacity:1; transform:none; } }
+  .console-ov .t { color: var(--faint); }
+  .console-ov .ag { color: var(--accent); }
+  .console-ov .ag.mv { color: var(--mauve); } .console-ov .ag.cy { color: var(--cyan); } .console-ov .ag.am { color: var(--amber); }
+  .console-ov .msg { color: var(--muted); }
+  .console-ov .cur { display:inline-block; width:7px; height:13px; background: var(--accent); vertical-align:middle; animation: blink 1.1s steps(1) infinite; }
+  @keyframes blink { 50%{ opacity:0; } }
+
+  /* ---------- close ---------- */
+  .close {
+    min-height: 100vh; display: flex; flex-direction: column; justify-content: center;
+    align-items: center; text-align: center; padding: 12vh 6vw; position: relative;
+    border-top: 1px solid var(--line);
+  }
+  .close .eyebrow { font-size: 11.5px; letter-spacing: .42em; text-transform: uppercase; color: var(--accent-dim); margin-bottom: 26px; }
+  .close h2 {
+    font-family: var(--display); font-weight: 600; font-style: italic;
+    font-size: clamp(30px, 6vw, 70px); line-height: 1.08; letter-spacing: -.02em;
+    margin: 0; color: var(--text); max-width: 18ch;
+  }
+  .close h2 b { font-style: normal; color: var(--accent); font-weight: 700; }
+  .close .acro {
+    margin-top: 34px; font-size: 12.5px; letter-spacing: .1em; color: var(--muted); max-width: 50ch;
+  }
+  .close .acro b { color: var(--accent-dim); font-weight: 700; }
+  .close .acro em { font-style: normal; color: var(--text); }
+  .cta { margin-top: 44px; display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+  .btn {
+    font-family: var(--mono); font-size: 13px; letter-spacing: .04em; padding: 14px 26px;
+    border-radius: 999px; border: 1px solid var(--line-2); color: var(--text); background: var(--ink-2);
+    transition: all .25s ease; display: inline-flex; align-items: center; gap: 10px;
+  }
+  .btn:hover { text-decoration: none; transform: translateY(-2px); }
+  .btn.primary { background: var(--accent); color: #0a0d07; border-color: var(--accent); font-weight: 600; box-shadow: 0 0 0 0 rgba(184,255,53,.4); }
+  .btn.primary:hover { box-shadow: 0 10px 30px -10px rgba(184,255,53,.6); }
+  .btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .close .sig { margin-top: 60px; font-size: 11px; letter-spacing: .14em; color: var(--faint); }
+
+  /* ---------- reveal ---------- */
+  @keyframes rise { from { opacity:0; transform: translateY(20px);} to { opacity:1; transform:none; } }
+  html.js .hero .eyebrow, html.js .hero h1.title, html.js .hero .tagline,
+  html.js .hero .subline, html.js .hero .scrollcue, html.js .hero .expand {
+    opacity: 0; animation: rise .9s cubic-bezier(.2,.7,.2,1) forwards;
+  }
+  html.js .hero h1.title { animation-delay: .08s; }
+  html.js .hero .tagline { animation-delay: .2s; }
+  html.js .hero .subline { animation-delay: .32s; }
+  html.js .hero .scrollcue { animation-delay: .44s; }
+  html.js .hero .expand { animation-delay: .56s; }
+
+  /* beats fade with proximity, handled by JS adding .beat-in */
+  html.js .beat .inner { opacity: .28; transform: translateY(10px); transition: opacity .6s ease, transform .6s ease; }
+  html.js .beat.beat-in .inner { opacity: 1; transform: none; }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 860px) {
+    .scrolly .grid { grid-template-columns: 1fr; gap: 0; }
+    .visual-col { order: -1; }
+    .pin { position: -webkit-sticky; position: sticky; top: 0; height: 46vh; }
+    .viz { max-width: 300px; }
+    .beat { min-height: auto; padding: 7vh 0; }
+    .beat h2 { font-size: clamp(26px, 8vw, 38px); }
+    .stage { left: 14px; padding: 6px 12px; font-size: 10px; }
+    .hero .expand { position: static; margin-top: 40px; }
+    .console-ov .clog { font-size: 10px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    html.js .hero *, html.js .beat .inner { animation: none !important; opacity: 1 !important; transform: none !important; }
+    .scrollcue .arrow, .core.beating .pulse-halo, .spin .ring-rotor,
+    .console-ov.show .row { animation: none !important; }
+    #pulse { display: none; }
+    .core .pulse-halo { display: none; }
+    .console-ov .row { opacity: 1 !important; }
+    .console-ov .cur { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- fixed stage label -->
+<div class="stage" id="stage">
+  <span class="brand">a<b>·</b>dapt</span>
+  <span class="div"></span>
+  <span id="stageLabel">the question</span>
+</div>
+
+<!-- progress rail -->
+<nav class="rail" id="rail" aria-label="story progress"></nav>
+
+<!-- HERO -->
+<header class="hero" id="hero">
+  <div class="eyebrow">Agent Development for Autonomous ProducTs</div>
+  <h1 class="title">a<em>·</em>dapt</h1>
+  <p class="tagline">Watch a product <b>evolve</b> like an organism.</p>
+  <p class="subline">
+    A closed loop of coding agents that decides what to build, what to fix, and grows a real
+    software product over many cycles — <b>no human in the loop</b>. This is the loop, step by step.
+  </p>
+  <div class="scrollcue"><span class="arrow">↓</span> scroll to begin</div>
+  <div class="expand">
+    <span><b>A</b>gent <b>D</b>evelopment for <b>A</b>utonomous <b>P</b>roduc<b>T</b>s</span>
+    <span>7 roles · 1 deterministic conductor · 0 humans inside</span>
+  </div>
+</header>
+
+<!-- SCROLLY -->
+<section class="scrolly">
+  <div class="grid">
+
+    <!-- LEFT: narration beats -->
+    <div class="narration">
+
+      <article class="beat" data-beat="0" data-stage="the question" data-node="none">
+        <div class="inner">
+          <div class="kicker"><span class="num">01</span> the question</div>
+          <h2>Can a loop of agents <em>evolve a real product</em> on its own?</h2>
+          <p class="lead">Can a closed loop of coding agents decide what to build, what to fix, and actually evolve a live product over many cycles — with no human in the loop — and can we <strong>watch how it decides</strong>?</p>
+          <p>The human is the <strong>observer outside the loop</strong>: never an approver inside it. You don't bless a plan or sign off a fix. You watch the organism think, and you keep the receipts.</p>
+        </div>
+      </article>
+
+      <article class="beat" data-beat="1" data-stage="the contract" data-node="none">
+        <div class="inner">
+          <div class="kicker"><span class="num">02</span> the contract</div>
+          <h2>The <em>scenario</em> is the contract.</h2>
+          <p class="lead">Truth is not the code. Not a ticket. Not the agent's memory of what it meant to do.</p>
+          <p>Truth is a <strong>real user goal</strong> paired with the <strong>visible outcome</strong> that proves it. A persona, a path, a result you can see from the outside.</p>
+          <blockquote>Reality is the <b>judge</b>.</blockquote>
+        </div>
+      </article>
+
+      <article class="beat" data-beat="2" data-stage="dreamer" data-node="0">
+        <div class="inner">
+          <div class="kicker"><span class="num">03</span> dreamer</div>
+          <h2>The <em>Dreamer</em> asks what this could become.</h2>
+          <p class="lead">It reads the north-star and the current product, then proposes the next ambition: new features, raised goals, a bolder version of the thing.</p>
+          <p><strong>"What should this product become?"</strong> This is the highest-creative-risk seat in the loop — and the engine of demand.</p>
+          <div class="meta"><span class="pill">reads code · <b>no write</b></span><span class="pill">role · demand</span></div>
+        </div>
+      </article>
+
+      <article class="beat" data-beat="3" data-stage="critic" data-node="1">
+        <div class="inner">
+          <div class="kicker"><span class="num">04</span> critic</div>
+          <h2>The <em>Critic</em> keeps the dreams honest.</h2>
+          <p class="lead">A skeptical product owner. It challenges each dream: real value to a real user — or bloat, busywork, <span class="am">reward-hacking</span>?</p>
+          <p>Only the survivors live. The pairing is deliberately adversarial so the loop can't fall in love with its own ideas.</p>
+          <div class="meta"><span class="pill">reads code · <b>no write</b></span><span class="pill">role · demand</span></div>
+        </div>
+      </article>
+
+      <article class="beat" data-beat="4" data-stage="generator" data-node="2">
+        <div class="inner">
+          <div class="kicker"><span class="num">05</span> scenario generator</div>
+          <h2>The <em>Generator</em> writes the contract.</h2>
+          <p class="lead">Surviving ambitions become <strong>user-centered, black-box scenarios</strong>: a persona, the steps, the expected outcome, the signals that mean failure.</p>
+          <p>Stable IDs, machine-readable success criteria. From here on, <span class="cy">the scenario is the thing being judged</span> — not the code that happens to implement it.</p>
+          <div class="meta"><span class="pill">reads code · discovery only</span><span class="pill">role · discovery</span></div>
+        </div>
+      </article>
+
+      <article class="beat" data-beat="5" data-stage="runner" data-node="3">
+        <div class="inner">
+          <div class="kicker"><span class="num">06</span> scenario runner</div>
+          <h2>The <em>Runner</em> behaves like a real user.</h2>
+          <p class="lead">It drives the running app in a real browser — Playwright, through the accessibility tree — and has <strong>no access to the source code</strong>.</p>
+          <p>Pass or fail is judged entirely from the outside. It captures evidence: screenshots, console errors, the exact failing step. <span class="cy">Black-box, by design.</span></p>
+          <div class="meta"><span class="pill warn"><b>no source access</b></span><span class="pill">role · validate</span></div>
+        </div>
+      </article>
+
+      <article class="beat" data-beat="6" data-stage="triage" data-node="4">
+        <div class="inner">
+          <div class="kicker"><span class="num">07</span> failure triage</div>
+          <h2>Triage turns chaos into <em>clean work</em>.</h2>
+          <p class="lead">Messy failures become tracked, <strong>deduplicated</strong> work items: one root cause that breaks twenty scenarios becomes <em>one</em> item, not twenty.</p>
+          <p>It classifies the noise — real bug vs. flaky environment vs. bad test data — and attaches the full evidence trail.</p>
+          <div class="meta"><span class="pill">evidence only</span><span class="pill">role · triage</span></div>
+        </div>
+      </article>
+
+      <article class="beat" data-beat="7" data-stage="implementation" data-node="5">
+        <div class="inner">
+          <div class="kicker"><span class="num">08</span> implementation</div>
+          <h2>Implementation makes the <em>smallest safe change</em>.</h2>
+          <p class="lead">It reads the work item and the evidence, writes the minimal fix, and commits to a branch in the target repo.</p>
+          <p>It can read and write the code — but it <strong>may not close its own work</strong>. The hand that fixes is never the hand that signs off.</p>
+          <div class="meta"><span class="pill">reads + <b>writes</b> code</span><span class="pill warn"><b>can't self-close</b></span></div>
+        </div>
+      </article>
+
+      <article class="beat" data-beat="8" data-stage="verification" data-node="6">
+        <div class="inner">
+          <div class="kicker"><span class="num">09</span> verification</div>
+          <h2>Only <em>Verification</em> can say Done.</h2>
+          <p class="lead">An <strong>independent</strong> agent — separate from whoever wrote the fix — re-runs the exact original scenario against the running app.</p>
+          <p>It alone marks a thing <strong>Done</strong>, and only because reality agreed. No proof, no done.</p>
+          <div class="meta"><span class="pill">independent of fixer</span><span class="pill"><b>marks Done — on proof</b></span></div>
+        </div>
+      </article>
+
+      <article class="beat" data-beat="9" data-stage="the loop" data-node="loop">
+        <div class="inner">
+          <div class="kicker"><span class="num">10</span> the whole loop</div>
+          <h2>There is <em>no success state</em>.</h2>
+          <p class="lead">Dream → critique → generate → run → triage → fix → verify → and back to dreaming. The pulse never stops at a finish line.</p>
+          <p>Success <strong>is</strong> the continued, perpetual evolution of the product. Each role is given deliberately different knowledge and tools — a <strong>separation of powers</strong> so the loop can't approve its own mistakes.</p>
+          <p><span class="cy">Git is the safety net and the genome:</span> every change is a revertible commit; the whole history of code <em>and</em> ambition is replayable.</p>
+        </div>
+      </article>
+
+      <article class="beat" data-beat="10" data-stage="parallel lanes" data-node="lanes">
+        <div class="inner">
+          <div class="kicker"><span class="num">11</span> parallel lanes</div>
+          <h2>Many lineages, <em>one baseline</em>.</h2>
+          <p class="lead">Fork the same starting point into independent <strong>lanes</strong> — different strategies, different models — and let them evolve in parallel.</p>
+          <p>Each lane is its own <span class="mv">lineage</span>, racing from the same genome. One dashboard watches them all, side by side, to see which way of evolving wins.</p>
+          <div class="meta"><span class="pill">1 baseline → <b>N lineages</b></span><span class="pill">parallel · independent</span></div>
+        </div>
+      </article>
+
+      <article class="beat" data-beat="11" data-stage="mission control" data-node="console">
+        <div class="inner">
+          <div class="kicker"><span class="num">12</span> mission control</div>
+          <h2>Observability is <em>first-class</em>.</h2>
+          <p class="lead">A live console streams each agent's thinking, tool calls, and decisions in real time — the organism, narrating itself.</p>
+          <p>A durable <strong>decision log</strong> makes a whole run replayable. That log is the experiment's primary deliverable: not just what changed, but <span class="cy">why the loop decided it</span>.</p>
+          <div class="meta"><span class="pill">live event stream</span><span class="pill"><b>replayable log</b></span></div>
+        </div>
+      </article>
+
+    </div>
+
+    <!-- RIGHT: pinned visual -->
+    <div class="visual-col">
+      <div class="pin">
+        <div class="viz" id="viz">
+          <svg viewBox="0 0 400 400" role="img" aria-label="The adapt agent loop: seven agents arranged around a central orchestrator core.">
+            <defs>
+              <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#b8ff35" stop-opacity=".5"/>
+                <stop offset="100%" stop-color="#b8ff35" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+
+            <!-- guide ring -->
+            <circle class="ring-bg" cx="200" cy="200" r="138"/>
+
+            <!-- rotor group holds edges, spokes, nodes so it can spin -->
+            <g class="ring-rotor" id="rotor">
+              <g id="edges"></g>
+              <g id="spokes"></g>
+              <g id="nodes"></g>
+            </g>
+
+            <!-- travelling pulse (outside rotor so it tracks active edge precisely) -->
+            <circle id="pulse" r="4.5" cx="200" cy="62"/>
+
+            <!-- central orchestrator core -->
+            <g class="core" id="core">
+              <circle class="pulse-halo" cx="200" cy="200" r="46"/>
+              <circle class="core-ring" cx="200" cy="200" r="46"/>
+              <circle class="core-disc" cx="200" cy="200" r="34"/>
+              <text class="core-lbl" x="200" y="198">orchestrator</text>
+              <text class="core-sub" x="200" y="212">deterministic · conducts</text>
+            </g>
+          </svg>
+
+          <!-- lanes overlay (beat 10) -->
+          <div class="lanes" id="lanes">
+            <div class="lane l1">
+              <svg viewBox="0 0 120 120"><g id="laneA"></g></svg>
+            </div>
+            <div class="lane l2">
+              <svg viewBox="0 0 120 120"><g id="laneB"></g></svg>
+            </div>
+            <div class="lane l3">
+              <svg viewBox="0 0 120 120"><g id="laneC"></g></svg>
+            </div>
+          </div>
+          <div class="baseline-tag" id="baselineTag">one baseline → parallel lineages</div>
+
+          <!-- console overlay (beat 11) -->
+          <div class="console-ov" id="consoleOv">
+            <div class="cbar"><i></i><i></i><i></i><span>adapt console · live decision stream</span></div>
+            <div class="clog" id="clog"></div>
+          </div>
+
+          <div class="caption" id="caption">the agent loop</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- CLOSE -->
+<section class="close" id="close">
+  <div class="eyebrow">the closing line</div>
+  <h2>Products that <b>evolve</b> like organisms — adapting, cycle after cycle, to demand.</h2>
+  <p class="acro">
+    <em>adapt</em> = <b>A</b>gent <b>D</b>evelopment for <b>A</b>utonomous <b>P</b>roduc<b>T</b>s.
+    No finish line — only the next cycle.
+  </p>
+  <div class="cta">
+    <a class="btn primary" href="README.md">Read the full guide → README.md</a>
+    <a class="btn ghost" href="readme.html">View the project page →</a>
+  </div>
+  <div class="sig">built with Claude Code · the human stays outside the loop</div>
+</section>
+
+<script>
+(function () {
+  "use strict";
+  document.documentElement.classList.add("js");
+
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---- the seven agents, in loop order ---- */
+  var AGENTS = [
+    "Dreamer", "Critic", "Generator", "Runner", "Triage", "Implement", "Verify"
+  ];
+  var N = AGENTS.length;
+  var CX = 200, CY = 200, R = 138, NR = 26; // ring radius, node radius
+
+  // angle so node 0 (Dreamer) sits at top, going clockwise
+  function angle(i) { return (-90 + (360 / N) * i) * Math.PI / 180; }
+  function px(i) { return CX + R * Math.cos(angle(i)); }
+  function py(i) { return CY + R * Math.sin(angle(i)); }
+
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function el(name, attrs) {
+    var n = document.createElementNS(SVGNS, name);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    return n;
+  }
+
+  var edgesG = document.getElementById("edges");
+  var spokesG = document.getElementById("spokes");
+  var nodesG = document.getElementById("nodes");
+
+  var nodeGroups = [];
+  var edgePaths = [];   // edgePaths[i] = edge from node i -> i+1
+  var spokeLines = [];
+
+  // build edges (curved arcs along the ring) + spokes + nodes
+  for (var i = 0; i < N; i++) {
+    // spoke to core
+    var sp = el("line", {
+      x1: CX, y1: CY, x2: px(i), y2: py(i), class: "spoke"
+    });
+    spokesG.appendChild(sp);
+    spokeLines.push(sp);
+  }
+
+  for (var i = 0; i < N; i++) {
+    var a1 = px(i), b1 = py(i);
+    var j = (i + 1) % N;
+    var a2 = px(j), b2 = py(j);
+    // arc following the ring
+    var large = 0, sweep = 1;
+    var d = "M " + a1 + " " + b1 + " A " + R + " " + R + " 0 " + large + " " + sweep + " " + a2 + " " + b2;
+    var path = el("path", { d: d, class: "edge" });
+    edgesG.appendChild(path);
+    edgePaths.push(path);
+  }
+
+  var ORD = ["1","2","3","4","5","6","7"];
+  for (var i = 0; i < N; i++) {
+    var g = el("g", { class: "node-g" });
+    var x = px(i), y = py(i);
+    g.appendChild(el("circle", { class: "halo", cx: x, cy: y, r: NR + 6 }));
+    g.appendChild(el("circle", { class: "disc", cx: x, cy: y, r: NR }));
+    var ord = el("text", { class: "ord", x: x, y: y - 3, "text-anchor": "middle",
+      "font-family": '"Fraunces",serif', "font-size": "16", "font-weight": "700" });
+    ord.textContent = ORD[i];
+    g.appendChild(ord);
+    var lbl = el("text", { class: "lbl", x: x, y: y + 11 });
+    lbl.textContent = AGENTS[i];
+    g.appendChild(lbl);
+    nodesG.appendChild(g);
+    nodeGroups.push(g);
+  }
+
+  /* ---- pulse animation along active edge ---- */
+  var pulseEl = document.getElementById("pulse");
+  var rafId = null;
+
+  function stopPulse() {
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    pulseEl.classList.remove("show");
+  }
+
+  // animate pulse from node `from` along edge to node `to` (adjacent), once
+  function runPulseEdge(from) {
+    if (reduce) return;
+    stopPulse();
+    var path = edgePaths[from];
+    var len = path.getTotalLength();
+    pulseEl.classList.add("show");
+    var start = null, dur = 900;
+    function step(ts) {
+      if (start === null) start = ts;
+      var t = Math.min(1, (ts - start) / dur);
+      var ease = t < .5 ? 2*t*t : -1 + (4 - 2*t)*t;
+      var pt = path.getPointAtLength(ease * len);
+      pulseEl.setAttribute("cx", pt.x);
+      pulseEl.setAttribute("cy", pt.y);
+      if (t < 1) { rafId = requestAnimationFrame(step); }
+      else { rafId = null; pulseEl.classList.remove("show"); }
+    }
+    rafId = requestAnimationFrame(step);
+  }
+
+  // continuous travelling pulse for the "whole loop" beat
+  var loopRaf = null;
+  function runContinuousPulse() {
+    if (reduce) return;
+    stopContinuous();
+    pulseEl.classList.add("show");
+    var seg = 0, start = null, dur = 1100;
+    function step(ts) {
+      if (start === null) start = ts;
+      var t = (ts - start) / dur;
+      if (t >= 1) { start = ts; seg = (seg + 1) % N; t = 0; }
+      var path = edgePaths[seg];
+      var len = path.getTotalLength();
+      var pt = path.getPointAtLength(t * len);
+      pulseEl.setAttribute("cx", pt.x);
+      pulseEl.setAttribute("cy", pt.y);
+      loopRaf = requestAnimationFrame(step);
+    }
+    loopRaf = requestAnimationFrame(step);
+  }
+  function stopContinuous() {
+    if (loopRaf) { cancelAnimationFrame(loopRaf); loopRaf = null; }
+  }
+
+  /* ---- visual state machine ---- */
+  var core = document.getElementById("core");
+  var viz = document.getElementById("viz");
+  var caption = document.getElementById("caption");
+  var lanes = document.getElementById("lanes");
+  var baselineTag = document.getElementById("baselineTag");
+  var consoleOv = document.getElementById("consoleOv");
+  var rotorSvg = viz.querySelector("svg");
+
+  var prevNode = null;
+  var currentMode = null;
+
+  function clearNodeStates() {
+    for (var i = 0; i < N; i++) nodeGroups[i].classList.remove("active", "dim", "visited");
+    for (var i = 0; i < N; i++) { edgePaths[i].classList.remove("lit"); spokeLines[i].classList.remove("lit"); }
+  }
+
+  function setActiveNode(idx) {
+    // idx: numeric node index
+    for (var i = 0; i < N; i++) {
+      var g = nodeGroups[i];
+      g.classList.remove("active", "dim", "visited");
+      if (i === idx) g.classList.add("active");
+      else if (i < idx) { g.classList.add("visited"); g.classList.add("dim"); }
+      else g.classList.add("dim");
+      edgePaths[i].classList.remove("lit");
+      spokeLines[i].classList.remove("lit");
+    }
+    // light the edge leading into the active node + its spoke
+    var inEdge = (idx - 1 + N) % N;
+    edgePaths[inEdge].classList.add("lit");
+    spokeLines[idx].classList.add("lit");
+    core.classList.add("beating");
+
+    // pulse from previous to current along the connecting edge
+    if (prevNode !== null && prevNode !== idx) {
+      var fromEdge = prevNode; // edge prevNode -> prevNode+1 ... but we want into idx
+      // animate along the edge that ENTERS idx (inEdge), starting from its tail node
+      runPulseEdge(inEdge);
+    } else {
+      runPulseEdge(inEdge);
+    }
+    prevNode = idx;
+  }
+
+  function applyMode(mode) {
+    if (mode === currentMode) return;
+    currentMode = mode;
+
+    // reset overlays
+    rotorSvg.parentElement; // noop
+    viz.querySelector("svg").style.opacity = "1";
+    lanes.classList.remove("show");
+    baselineTag.style.opacity = "0";
+    consoleOv.classList.remove("show");
+    rotorSvg.parentElement.classList.remove("spin");
+    viz.classList.remove("spin");
+    stopContinuous();
+
+    if (mode === "none") {
+      stopPulse();
+      clearNodeStates();
+      // gentle idle: all nodes neutral, core quiet
+      core.classList.remove("beating");
+      caption.textContent = "the agent loop";
+      caption.style.color = "var(--faint)";
+      prevNode = null;
+    } else if (mode === "loop") {
+      stopPulse();
+      // all nodes lit/visited, core beating, ring spins, continuous pulse
+      for (var i = 0; i < N; i++) {
+        nodeGroups[i].classList.remove("dim");
+        nodeGroups[i].classList.add("visited");
+        nodeGroups[i].classList.remove("active");
+        edgePaths[i].classList.add("lit");
+        spokeLines[i].classList.add("lit");
+      }
+      core.classList.add("beating");
+      viz.classList.add("spin");
+      caption.textContent = "perpetual evolution — no finish line";
+      caption.style.color = "var(--accent-dim)";
+      runContinuousPulse();
+      prevNode = null;
+    } else if (mode === "lanes") {
+      stopPulse();
+      // dim main ring, show lanes
+      viz.querySelector("svg").style.opacity = ".18";
+      clearNodeStates();
+      core.classList.remove("beating");
+      lanes.classList.add("show");
+      baselineTag.style.opacity = "1";
+      caption.textContent = "parallel lineages from one baseline";
+      caption.style.color = "var(--mauve)";
+      prevNode = null;
+    } else if (mode === "console") {
+      stopPulse();
+      viz.querySelector("svg").style.opacity = ".25";
+      clearNodeStates();
+      core.classList.remove("beating");
+      consoleOv.classList.add("show");
+      caption.textContent = "mission control — live decision stream";
+      caption.style.color = "var(--cyan)";
+      renderConsole();
+      prevNode = null;
+    } else {
+      // numeric node index as string
+      var idx = parseInt(mode, 10);
+      caption.textContent = AGENTS[idx];
+      caption.style.color = "var(--accent)";
+      setActiveNode(idx);
+    }
+  }
+
+  /* ---- build the small lane rings ---- */
+  function buildLane(groupId, color) {
+    var g = document.getElementById(groupId);
+    var lcx = 60, lcy = 60, lr = 40, ln = 7;
+    g.appendChild(el("circle", { cx: lcx, cy: lcy, r: lr, class: "lring" }));
+    for (var i = 0; i < ln; i++) {
+      var ang = (-90 + (360 / ln) * i) * Math.PI / 180;
+      var x = lcx + lr * Math.cos(ang), y = lcy + lr * Math.sin(ang);
+      g.appendChild(el("circle", { cx: x, cy: y, r: 6, class: "lnode" }));
+    }
+    g.appendChild(el("circle", { cx: lcx, cy: lcy, r: 10, class: "lcore" }));
+  }
+  buildLane("laneA");
+  buildLane("laneB");
+  buildLane("laneC");
+
+  /* ---- console fake stream (rendered when console mode shows) ---- */
+  var CLINES = [
+    ['t', '14:02:01 '], ['ag', 'dreamer'], ['msg', ' proposes “saved searches” — raises north-star v7'],
+    ['t', '14:02:48 '], ['ag mv', 'critic'], ['msg', ' rejects 2/3 demands as bloat · 1 survives'],
+    ['t', '14:03:30 '], ['ag cy', 'generator'], ['msg', ' writes scenario S-114 · persona: returning user'],
+    ['t', '14:05:12 '], ['ag', 'runner'], ['msg', ' drives browser → S-114 FAIL at step 4 (no results)'],
+    ['t', '14:05:40 '], ['ag am', 'triage'], ['msg', ' dedupes 6 failures → 1 item · classifies: real bug'],
+    ['t', '14:08:19 '], ['ag', 'implement'], ['msg', ' commits fix on branch adapt/s-114 (smallest change)'],
+    ['t', '14:10:02 '], ['ag cy', 'verify'], ['msg', ' independent re-run → S-114 PASS · marks Done ✓']
+  ];
+  var consoleRendered = false;
+  function renderConsole() {
+    var clog = document.getElementById("clog");
+    clog.innerHTML = "";
+    var groups = [];
+    for (var i = 0; i < CLINES.length; i += 3) groups.push([CLINES[i], CLINES[i+1], CLINES[i+2]]);
+    groups.forEach(function (grp, gi) {
+      var row = document.createElement("div");
+      row.className = "row";
+      grp.forEach(function (part) {
+        var s = document.createElement("span");
+        s.className = part[0];
+        s.textContent = part[1];
+        row.appendChild(s);
+      });
+      if (!reduce) row.style.animationDelay = (gi * 0.42 + 0.1) + "s";
+      clog.appendChild(row);
+    });
+    var cur = document.createElement("div");
+    cur.className = "row"; cur.style.marginTop = "6px";
+    var cs = document.createElement("span"); cs.className = "t"; cs.textContent = "› ";
+    var blink = document.createElement("span"); blink.className = "cur";
+    cur.appendChild(cs); cur.appendChild(blink);
+    if (!reduce) cur.style.animationDelay = (groups.length * 0.42 + 0.2) + "s";
+    clog.appendChild(cur);
+  }
+
+  /* ---- intersection observer drives the active beat ---- */
+  var beats = Array.prototype.slice.call(document.querySelectorAll(".beat"));
+  var stageLabel = document.getElementById("stageLabel");
+  var stage = document.getElementById("stage");
+  var rail = document.getElementById("rail");
+
+  // build progress rail ticks
+  var ticks = beats.map(function (b, i) {
+    var t = document.createElement("button");
+    t.className = "tick";
+    t.setAttribute("data-label", b.getAttribute("data-stage"));
+    t.setAttribute("aria-label", "Go to beat: " + b.getAttribute("data-stage"));
+    t.addEventListener("click", function () {
+      b.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+    });
+    rail.appendChild(t);
+    return t;
+  });
+
+  var activeBeat = -1;
+  function activate(idx) {
+    if (idx === activeBeat) return;
+    activeBeat = idx;
+    var b = beats[idx];
+    stageLabel.textContent = b.getAttribute("data-stage");
+    applyMode(b.getAttribute("data-node"));
+    ticks.forEach(function (t, i) {
+      t.classList.toggle("active", i === idx);
+      t.classList.toggle("past", i < idx);
+    });
+  }
+
+  // observe beats; choose the one nearest viewport center as active
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      e.target.classList.toggle("beat-in", e.isIntersecting && e.intersectionRatio > 0.18);
+    });
+    // pick best candidate: closest to center
+    var best = null, bestDist = Infinity;
+    var mid = window.innerHeight / 2;
+    beats.forEach(function (b) {
+      var r = b.getBoundingClientRect();
+      var c = r.top + r.height / 2;
+      var d = Math.abs(c - mid);
+      if (r.bottom > 0 && r.top < window.innerHeight && d < bestDist) { bestDist = d; best = b; }
+    });
+    if (best) activate(parseInt(best.getAttribute("data-beat"), 10));
+  }, { threshold: [0, 0.18, 0.5, 0.85], rootMargin: "-10% 0px -10% 0px" });
+
+  beats.forEach(function (b) { io.observe(b); });
+
+  // hide stage label over hero / footer for cleanliness
+  var hero = document.getElementById("hero");
+  var heroIO = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      stage.style.opacity = e.isIntersecting ? "0" : "1";
+    });
+  }, { threshold: 0.4 });
+  heroIO.observe(hero);
+
+  // initialize idle state
+  applyMode("none");
+})();
+</script>
+</body>
+</html>
