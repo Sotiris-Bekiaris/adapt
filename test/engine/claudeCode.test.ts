@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ClaudeCodeEngine } from "../../src/engine/claudeCode.ts";
+import { buildClaudeArgs, ClaudeCodeEngine, resolveMcpConfig } from "../../src/engine/claudeCode.ts";
 
 // A fake "engine" that prints two NDJSON lines (one split across writes) then exits 0.
 const fakeScript = `
@@ -12,6 +12,24 @@ setTimeout(() => { process.stdout.write(out[1].slice(10) + "\\n"); process.exit(
 `;
 
 describe("ClaudeCodeEngine", () => {
+  it("resolves logical MCP names to Claude config JSON", () => {
+    const parsed = JSON.parse(resolveMcpConfig("playwright"));
+    expect(parsed.mcpServers.playwright.command).toMatch(/^npx(\.cmd)?$/);
+    expect(parsed.mcpServers.playwright.args).toEqual(["-y", "@playwright/mcp@latest"]);
+  });
+
+  it("builds strict MCP args from role-scoped server names", () => {
+    const args = buildClaudeArgs(
+      { role: "runner", prompt: "go", cwd: process.cwd(), mcpServers: ["playwright"] },
+      { skipPermissions: true },
+    );
+    expect(args).toContain("--strict-mcp-config");
+    const idx = args.indexOf("--mcp-config");
+    expect(idx).toBeGreaterThan(-1);
+    const parsed = JSON.parse(args[idx + 1]!);
+    expect(parsed.mcpServers.playwright.args).toEqual(["-y", "@playwright/mcp@latest"]);
+  });
+
   it("spawns the command, parses streamed lines, and emits start/exit", async () => {
     const engine = new ClaudeCodeEngine({
       command: "node",

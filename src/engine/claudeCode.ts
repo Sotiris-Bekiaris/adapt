@@ -10,13 +10,45 @@ export interface ClaudeCodeEngineOptions {
   now?: () => string;
 }
 
+function npxCommand(): string {
+  return process.platform === "win32" ? "npx.cmd" : "npx";
+}
+
+function mcpServerConfig(name: string, command: string, args: string[]): string {
+  return JSON.stringify({
+    mcpServers: {
+      [name]: {
+        type: "stdio",
+        command,
+        args,
+        env: {},
+      },
+    },
+  });
+}
+
+/** Resolve adapt's logical MCP aliases into Claude Code --mcp-config payloads. */
+export function resolveMcpConfig(config: string): string {
+  switch (config) {
+    case "playwright":
+      return mcpServerConfig("playwright", npxCommand(), ["-y", "@playwright/mcp@latest"]);
+    case "chrome-devtools":
+      return mcpServerConfig("chrome-devtools", npxCommand(), ["-y", "chrome-devtools-mcp@latest"]);
+    case "jira":
+      return mcpServerConfig("jira", "uvx", ["mcp-atlassian"]);
+    default:
+      return config;
+  }
+}
+
 /** Build the claude CLI args for a spec. Exported for testing. */
 export function buildClaudeArgs(spec: AgentSpec, opts: { model?: string; skipPermissions: boolean }): string[] {
   const args: string[] = [];
   if (opts.model) args.push("--model", opts.model);
   args.push("-p", spec.prompt, "--output-format", "stream-json", "--verbose");
   if (opts.skipPermissions) args.push("--dangerously-skip-permissions");
-  for (const s of spec.mcpServers ?? []) args.push("--mcp-config", s);
+  args.push("--strict-mcp-config");
+  for (const s of spec.mcpServers ?? []) args.push("--mcp-config", resolveMcpConfig(s));
   return args;
 }
 
