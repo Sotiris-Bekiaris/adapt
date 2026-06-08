@@ -3,6 +3,7 @@ config.json
 .env
 .env.*
 *.local
+scripts/deepseek.env
 
 # agent runtime artifacts (generated, not source of truth for the design)
 scenario-runs/

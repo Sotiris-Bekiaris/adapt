@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { workspacePaths } from "../workspace/paths.ts";
 import { parseScenario } from "./parse.ts";
@@ -20,6 +20,9 @@ export interface RegistryEntry {
 /** Read scenario files, validate them, and write a sorted index.json. Returns the entries. */
 export function rebuildRegistry(targetRepo: string): RegistryEntry[] {
   const { scenariosDir, scenarioIndex } = workspacePaths(targetRepo);
+  // Ensure the dir exists so writing index.json never ENOENTs — the worktree can be transiently
+  // mid-checkout (a repair agent switching branches) when a cycle starts and calls this.
+  if (!existsSync(scenariosDir)) mkdirSync(scenariosDir, { recursive: true });
   const entries: RegistryEntry[] = [];
   const seen = new Set<string>();
 
