@@ -19,7 +19,7 @@ export class StubEngine implements AgentEngine {
     const events: AgentEvent[] = this.script
       ? this.script(spec)
       : [
-          { kind: "agent.start", role: spec.role, at: this.now() },
+          { kind: "agent.start", role: spec.role, at: this.now(), data: { prompt: spec.prompt } },
           { kind: "agent.text", role: spec.role, at: this.now(), text: `(stub) ${spec.prompt}` },
           { kind: "agent.exit", role: spec.role, at: this.now(), exitCode: 0 },
         ];

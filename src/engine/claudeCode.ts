@@ -82,7 +82,7 @@ export class ClaudeCodeEngine implements AgentEngine {
         onEvent(e);
       };
 
-      handle({ kind: "agent.start", role: spec.role, at: this.now() });
+      handle({ kind: "agent.start", role: spec.role, at: this.now(), data: { prompt: spec.prompt } });
 
       child.stdout.on("data", (chunk: Buffer) => {
         buf += chunk.toString();

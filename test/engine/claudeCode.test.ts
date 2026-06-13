@@ -46,6 +46,19 @@ describe("ClaudeCodeEngine", () => {
     expect(result.finalText).toBe("hi");
   });
 
+  it("emits the prompt as data on agent.start", async () => {
+    const engine = new ClaudeCodeEngine({
+      command: "node",
+      argsBuilder: () => ["-e", fakeScript],
+      now: () => "t",
+    });
+    let startData: unknown = undefined;
+    await engine.run({ role: "runner", prompt: "go", cwd: process.cwd() }, (e) => {
+      if (e.kind === "agent.start") startData = e.data;
+    });
+    expect(startData).toEqual({ prompt: "go" });
+  });
+
   it("captures a non-zero exit code", async () => {
     const engine = new ClaudeCodeEngine({ command: "node", argsBuilder: () => ["-e", "process.exit(3)"], now: () => "t" });
     const r = await engine.run({ role: "x", prompt: "p", cwd: process.cwd() }, () => {});

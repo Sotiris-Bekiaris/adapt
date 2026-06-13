@@ -16,6 +16,15 @@ describe("StubEngine", () => {
     expect(result.role).toBe("runner");
   });
 
+  it("emits the prompt as data on agent.start", async () => {
+    const engine = new StubEngine({ now: () => "2026-06-13T10:00:00.000Z" });
+    let startData: unknown = undefined;
+    await engine.run({ role: "critic", prompt: "review this patch", cwd: "/repo" }, (e) => {
+      if (e.kind === "agent.start") startData = e.data;
+    });
+    expect(startData).toEqual({ prompt: "review this patch" });
+  });
+
   it("can be scripted with explicit events", async () => {
     const engine = new StubEngine({
       now: () => "t",
