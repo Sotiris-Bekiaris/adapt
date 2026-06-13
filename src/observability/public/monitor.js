@@ -1,8 +1,14 @@
+import { buildCycles } from "/cycles.js";
+
 const statusEl = document.getElementById("status");
 const lanesEl = document.getElementById("lanes");
 const focusHeaderEl = document.getElementById("focus-header");
 const agentsEl = document.getElementById("agents");
 const timelineEl = document.getElementById("timeline-list");
+const focusMainQuery = () => document.querySelector(".focus-body");
+const cyclesEl = document.getElementById("cycles");
+const toggleEl = document.getElementById("view-toggle");
+const timelineAsideEl = document.getElementById("timeline");
 
 const BUFFER_CAP = 500;
 
@@ -11,6 +17,10 @@ let focusedLane = null;
 let lanes = []; // latest [{ laneId, model, baseline, status, cycle }]
 const buffers = new Map(); // laneId -> event[]
 let columns = new Map(); // role -> events container (for focused lane)
+let viewMode = "cycles"; // "stream" | "cycles"
+const laneEvents = new Map(); // laneId -> full ConsoleEvent[] (history + live), source for buildCycles
+const expanded = new Set(); // expand keys: cycle "c:<n>" and step "s:<n>:<idx>"
+const seenCycleKeys = new Set(); // cycles whose default-open has been applied
 
 function laneMeta(laneId) {
   return lanes.find((l) => l.laneId === laneId) || null;
@@ -69,6 +79,142 @@ function clearPane() {
   timelineEl.replaceChildren();
   columns = new Map();
 }
+
+// --- cycles view ---
+
+function cycleKey(c) {
+  return "c:" + (c.cycle === null ? "pre" : c.cycle);
+}
+function stepKey(c, s) {
+  return "s:" + (c.cycle === null ? "pre" : c.cycle) + ":" + s.index;
+}
+
+function isCycleOpen(c, isNewest) {
+  const key = cycleKey(c);
+  if (!seenCycleKeys.has(key)) {
+    seenCycleKeys.add(key);
+    if (isNewest || c.status === "running") expanded.add(key);
+  }
+  return expanded.has(key);
+}
+
+function ioBlock(label, text) {
+  const block = document.createElement("div");
+  block.className = "io-block";
+  const h = document.createElement("div");
+  h.className = "io-label";
+  h.textContent = label;
+  const pre = document.createElement("pre");
+  pre.className = "io-text";
+  pre.textContent = text;
+  block.append(h, pre);
+  return block;
+}
+
+function renderStep(c, s) {
+  const row = document.createElement("div");
+  row.className = "step " + s.status;
+
+  const head = document.createElement("div");
+  head.className = "step-h";
+  const idx = document.createElement("span");
+  idx.className = "step-idx";
+  idx.textContent = "#" + s.index;
+  const role = document.createElement("span");
+  role.className = "step-role";
+  role.textContent = s.role;
+  const status = document.createElement("span");
+  status.className = "step-status " + s.status;
+  status.textContent = s.status;
+  const sum = document.createElement("span");
+  sum.className = "step-sum";
+  sum.textContent = s.summary;
+  head.append(idx, role, status, sum);
+
+  const key = stepKey(c, s);
+  head.addEventListener("click", () => {
+    if (expanded.has(key)) expanded.delete(key);
+    else expanded.add(key);
+    renderCycles();
+  });
+  row.append(head);
+
+  if (expanded.has(key)) {
+    const detail = document.createElement("div");
+    detail.className = "step-detail";
+    const prev = s.index > 1 ? c.steps[s.index - 2] : null;
+    const inLabel = prev ? `INPUT (from #${prev.index} ${prev.role})` : "INPUT (cycle seed)";
+    detail.append(
+      ioBlock(inLabel, s.input ?? "(no prompt logged)"),
+      ioBlock("OUTPUT", s.output || "(no output)"),
+    );
+    row.append(detail);
+  }
+  return row;
+}
+
+function renderCycle(c, isNewest) {
+  const wrap = document.createElement("div");
+  wrap.className = "cycle " + c.status;
+  const open = isCycleOpen(c, isNewest);
+
+  const header = document.createElement("div");
+  header.className = "cycle-h";
+  const caret = document.createElement("span");
+  caret.className = "caret";
+  caret.textContent = open ? "▼" : "▶";
+  const title = document.createElement("span");
+  title.className = "cycle-title";
+  title.textContent = c.cycle === null ? "pre-cycle" : "Cycle " + c.cycle;
+  const dot = document.createElement("span");
+  dot.className = "dot " + c.status;
+  dot.textContent = c.status === "error" ? "✗" : "●";
+  const meta = document.createElement("span");
+  meta.className = "cycle-meta";
+  const time = (c.startedAt || "").slice(11, 19);
+  const n = c.steps.length;
+  meta.textContent = `${time ? time + " · " : ""}${n} step${n === 1 ? "" : "s"}`;
+  header.append(caret, title, dot, meta);
+  header.addEventListener("click", () => {
+    const key = cycleKey(c);
+    if (expanded.has(key)) expanded.delete(key);
+    else expanded.add(key);
+    renderCycles();
+  });
+  wrap.append(header);
+
+  if (open) {
+    const body = document.createElement("div");
+    body.className = "cycle-body";
+    for (const s of c.steps) body.append(renderStep(c, s));
+    wrap.append(body);
+  }
+  return wrap;
+}
+
+function renderCycles() {
+  cyclesEl.replaceChildren();
+  if (!focusedLane) return;
+  const cycles = buildCycles(laneEvents.get(focusedLane) || []);
+  for (let i = cycles.length - 1; i >= 0; i--) {
+    cyclesEl.append(renderCycle(cycles[i], i === cycles.length - 1));
+  }
+}
+
+function setView(mode) {
+  viewMode = mode;
+  for (const b of toggleEl.querySelectorAll("button")) {
+    b.classList.toggle("active", b.dataset.view === mode);
+  }
+  const body = focusMainQuery();
+  if (body) body.classList.toggle("cycles-mode", mode === "cycles");
+  if (mode === "cycles") renderCycles();
+}
+
+toggleEl.addEventListener("click", (ev) => {
+  const btn = ev.target.closest("button[data-view]");
+  if (btn) setView(btn.dataset.view);
+});
 
 // --- sidebar ---
 
@@ -140,8 +286,11 @@ function renderSidebar() {
 function focusLane(laneId) {
   focusedLane = laneId;
   clearPane();
+  expanded.clear();
+  seenCycleKeys.clear();
   renderSidebar();
   renderFocusHeader();
+  setView(viewMode);
 
   const meta = laneMeta(laneId);
   if (meta && meta.status === "running") {
@@ -149,7 +298,7 @@ function focusLane(laneId) {
     const buf = buffers.get(laneId);
     if (buf) for (const e of buf) render(e);
   }
-  // ask server for what it has (history for stopped lanes; harmless otherwise)
+  // ask server for what it has (full history; drives the cycles view)
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({ type: "focus", lane: laneId }));
   }
@@ -163,6 +312,15 @@ function bufferEvent(laneId, event) {
   }
   buf.push(event);
   if (buf.length > BUFFER_CAP) buf.splice(0, buf.length - BUFFER_CAP);
+}
+
+function appendLaneEvent(laneId, event) {
+  let list = laneEvents.get(laneId);
+  if (!list) {
+    list = [];
+    laneEvents.set(laneId, list);
+  }
+  list.push(event);
 }
 
 // --- message handling ---
@@ -190,13 +348,19 @@ function handleMessage(msg) {
 
   if (msg.type === "event") {
     bufferEvent(msg.lane, msg.event);
-    if (msg.lane === focusedLane) render(msg.event);
+    appendLaneEvent(msg.lane, msg.event);
+    if (msg.lane === focusedLane) {
+      render(msg.event);
+      if (viewMode === "cycles") renderCycles();
+    }
     return;
   }
 
   if (msg.type === "history") {
-    if (msg.lane === focusedLane && Array.isArray(msg.events)) {
-      for (const e of msg.events) render(e);
+    if (Array.isArray(msg.events)) laneEvents.set(msg.lane, msg.events.slice());
+    if (msg.lane === focusedLane) {
+      for (const e of msg.events || []) render(e);
+      if (viewMode === "cycles") renderCycles();
     }
     return;
   }
