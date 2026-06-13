@@ -28,55 +28,55 @@ describe("buildCycles", () => {
       cycleDone(1),
     ]);
     expect(cycles).toHaveLength(1);
-    expect(cycles[0].cycle).toBe(1);
-    expect(cycles[0].status).toBe("done");
-    expect(cycles[0].steps.map((s) => s.role)).toEqual(["dreamer", "generator"]);
-    expect(cycles[0].steps.map((s) => s.index)).toEqual([1, 2]);
+    expect(cycles[0]!.cycle).toBe(1);
+    expect(cycles[0]!.status).toBe("done");
+    expect(cycles[0]!.steps.map((s) => s.role)).toEqual(["dreamer", "generator"]);
+    expect(cycles[0]!.steps.map((s) => s.index)).toEqual([1, 2]);
   });
 
   it("captures input prompt, output, and summary per step", () => {
-    const [c] = buildCycles([
+    const c = buildCycles([
       cycleStart(1),
       aStart("critic", "review this patch"),
       aText("critic", "looks risky"),
       aText("critic", "REJECT: no tests"),
       aExit("critic"),
       cycleDone(1),
-    ]);
-    const step = c.steps[0];
+    ])[0]!;
+    const step = c.steps[0]!;
     expect(step.input).toBe("review this patch");
     expect(step.output).toBe("looks riskyREJECT: no tests");
     expect(step.summary).toBe("REJECT: no tests");
   });
 
   it("treats a repeated role as separate numbered steps", () => {
-    const [c] = buildCycles([
+    const c = buildCycles([
       cycleStart(1),
       aStart("critic", "p1"), aExit("critic"),
       aStart("critic", "p2"), aExit("critic"),
       cycleDone(1),
-    ]);
+    ])[0]!;
     expect(c.steps).toHaveLength(2);
     expect(c.steps.map((s) => s.index)).toEqual([1, 2]);
     expect(c.steps.map((s) => s.input)).toEqual(["p1", "p2"]);
   });
 
   it("marks a cycle that errored", () => {
-    const [c] = buildCycles([cycleStart(1), aStart("dreamer", "x"), aExit("dreamer"), cycleErr(1)]);
+    const c = buildCycles([cycleStart(1), aStart("dreamer", "x"), aExit("dreamer"), cycleErr(1)])[0]!;
     expect(c.status).toBe("error");
   });
 
   it("marks a step that errored", () => {
-    const [c] = buildCycles([
+    const c = buildCycles([
       cycleStart(1), aStart("dreamer", "x"), aErr("dreamer"), aExit("dreamer"), cycleDone(1),
-    ]);
-    expect(c.steps[0].status).toBe("error");
+    ])[0]!;
+    expect(c.steps[0]!.status).toBe("error");
   });
 
   it("leaves an unfinished cycle and step as running", () => {
-    const [c] = buildCycles([cycleStart(2), aStart("dreamer", "x"), aText("dreamer", "thinking")]);
+    const c = buildCycles([cycleStart(2), aStart("dreamer", "x"), aText("dreamer", "thinking")])[0]!;
     expect(c.status).toBe("running");
-    expect(c.steps[0].status).toBe("running");
+    expect(c.steps[0]!.status).toBe("running");
   });
 
   it("puts events before the first cycle.start in a pre-cycle bucket", () => {
@@ -85,25 +85,25 @@ describe("buildCycles", () => {
       cycleStart(1), aStart("dreamer", "x"), aExit("dreamer"), cycleDone(1),
     ]);
     expect(cycles).toHaveLength(2);
-    expect(cycles[0].cycle).toBe(null);
-    expect(cycles[0].steps[0].role).toBe("demo");
-    expect(cycles[1].cycle).toBe(1);
+    expect(cycles[0]!.cycle).toBe(null);
+    expect(cycles[0]!.steps[0]!.role).toBe("demo");
+    expect(cycles[1]!.cycle).toBe(1);
   });
 
   it("falls back to the terminal event kind when a step has no text", () => {
-    const [c] = buildCycles([cycleStart(1), aStart("scout", "x"), aExit("scout"), cycleDone(1)]);
-    expect(c.steps[0].summary).toBe("agent.exit");
+    const c = buildCycles([cycleStart(1), aStart("scout", "x"), aExit("scout"), cycleDone(1)])[0]!;
+    expect(c.steps[0]!.summary).toBe("agent.exit");
   });
 
   it("ignores non-cycle orchestrator events inside a step", () => {
-    const [c] = buildCycles([
+    const c = buildCycles([
       cycleStart(1),
       aStart("scout", "x"),
       orchNoise("run.transition"),
       aExit("scout"),
       cycleDone(1),
-    ]);
-    const step = c.steps[0];
+    ])[0]!;
+    const step = c.steps[0]!;
     expect(step.output).toBe("");
     expect(step.summary).toBe("agent.exit"); // terminal agent event, not run.transition
     expect(step.events.some((e) => e.kind === "run.transition")).toBe(false);
