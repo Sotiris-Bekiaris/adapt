@@ -8,7 +8,6 @@ const timelineEl = document.getElementById("timeline-list");
 const focusMainQuery = () => document.querySelector(".focus-body");
 const cyclesEl = document.getElementById("cycles");
 const toggleEl = document.getElementById("view-toggle");
-const timelineAsideEl = document.getElementById("timeline");
 
 const BUFFER_CAP = 500;
 
@@ -357,6 +356,9 @@ function handleMessage(msg) {
   }
 
   if (msg.type === "history") {
+    // History is the authoritative full log on arrival; replace whatever live
+    // events accumulated for this lane. A live event racing in just before this
+    // reply is self-healing — the next live event triggers a fresh buildCycles.
     if (Array.isArray(msg.events)) laneEvents.set(msg.lane, msg.events.slice());
     if (msg.lane === focusedLane) {
       for (const e of msg.events || []) render(e);
