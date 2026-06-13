@@ -30,6 +30,9 @@ priority: medium
 persona: <who the user is>
 tags: [<area>]
 source: agent-discovered
+hooks:
+  setup: <shell command that seeds the data this scenario assumes, or omit the whole hooks block>
+  teardown: <shell command that cleans that data, or omit>
 ---
 # Scenario
 <As the persona, do X and verify the visible outcome Y.>
@@ -39,6 +42,14 @@ source: agent-discovered
 
 ## Expected outcome
 - <a visible, user-observable success condition>
+
+SEED DATA — CRITICAL: The runner is a black-box browser user with NO repo access; it cannot create data itself.
+If your scenario depends on data existing BEFORE the user acts (a specific account to log in as, pre-existing
+records, a particular app state), you MUST emit a "hooks.setup" command that seeds EXACTLY that data into the
+isolated test database, plus a "hooks.teardown" that cleans it. Discover the project's own seed tooling (you may
+read the source to find it — e.g. a seed script, migration, or fixture loader). Never reference a user or record
+your setup hook does not create. If the scenario genuinely needs no pre-existing data (e.g. a fresh signup from an
+empty state), OMIT the entire "hooks" block.
 
 Do NOT invent extra files or use IDs other than the assigned ones. Write the files before finishing.`;
 }

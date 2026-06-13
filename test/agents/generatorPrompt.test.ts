@@ -15,4 +15,13 @@ describe("generatorPrompt", () => {
     expect(p).toContain("status: ready");
     expect(p.toLowerCase()).toContain("black-box");
   });
+
+  it("instructs the generator to emit setup/teardown seed hooks for data-dependent scenarios", () => {
+    const demand = newDemand({ id: "DMD-003", title: "CSV export", rationale: "users ask", proposedScenarios: ["Export the project list as CSV"], createdAt: "t" });
+    const p = generatorPrompt({ demand, scenariosDir: "/r/.adapt/scenarios", assignedIds: ["SCN-006"] });
+    expect(p).toContain("hooks:");
+    expect(p).toContain("setup:");
+    expect(p).toContain("teardown:");
+    expect(p.toLowerCase()).toContain("seed");
+  });
 });
