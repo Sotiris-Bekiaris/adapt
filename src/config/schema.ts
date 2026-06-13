@@ -23,6 +23,7 @@ export const AdaptConfigSchema = z.object({
   hooks: z.object({
     setup: z.string().optional(),
     teardown: z.string().optional(),
+    requireSetupHook: z.boolean().default(false),
   }).default({}),
 
   // Work tracker: Jira behind an adapter (blueprint §9–10)

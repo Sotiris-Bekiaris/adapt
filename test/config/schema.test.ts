@@ -49,3 +49,15 @@ describe("AdaptConfigSchema", () => {
     expect(r.success).toBe(true);
   });
 });
+
+describe("hooks.requireSetupHook", () => {
+  it("defaults to false", () => {
+    const c = AdaptConfigSchema.parse({ targetRepoPath: "/r", appBaseUrl: "http://x" });
+    expect(c.hooks.requireSetupHook).toBe(false);
+  });
+
+  it("can be enabled", () => {
+    const c = AdaptConfigSchema.parse({ targetRepoPath: "/r", appBaseUrl: "http://x", hooks: { requireSetupHook: true } });
+    expect(c.hooks.requireSetupHook).toBe(true);
+  });
+});
