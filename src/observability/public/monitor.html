@@ -56,6 +56,55 @@
       #focus-header .fh-cycle { color: #f9e2af; }
       #focus-header .fh-empty { color: #6c7086; }
       .focus-body { display: grid; grid-template-columns: 1fr 320px; flex: 1; min-height: 0; }
+      #view-toggle {
+        display: flex;
+        gap: .3rem;
+        padding: .35rem .8rem;
+        background: #0d1018;
+        border-bottom: 1px solid #1f2430;
+      }
+      #view-toggle button {
+        font: inherit;
+        font-size: 11px;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: #6c7086;
+        background: transparent;
+        border: 1px solid #1f2430;
+        border-radius: 4px;
+        padding: .15rem .6rem;
+        cursor: pointer;
+      }
+      #view-toggle button.active { color: #cdd6f4; border-color: #89b4fa; background: #1b2230; }
+      #cycles { flex: 1; min-width: 0; overflow-y: auto; padding: .5rem .8rem; display: none; }
+      .focus-body.cycles-mode { display: block; }
+      .focus-body.cycles-mode #agents,
+      .focus-body.cycles-mode #timeline { display: none; }
+      .focus-body.cycles-mode #cycles { display: block; }
+      .cycle { border: 1px solid #1f2430; border-radius: 6px; margin-bottom: .5rem; background: #0d1018; }
+      .cycle-h { display: flex; align-items: center; gap: .5rem; padding: .45rem .6rem; cursor: pointer; font-size: 12px; }
+      .cycle-h:hover { background: #11151f; }
+      .cycle-h .caret { color: #6c7086; width: 1ch; }
+      .cycle-h .cycle-title { color: #cdd6f4; font-weight: 600; }
+      .cycle-h .dot.running { color: #a6e3a1; }
+      .cycle-h .dot.done { color: #89b4fa; }
+      .cycle-h .dot.error { color: #f38ba8; }
+      .cycle-h .cycle-meta { color: #6c7086; margin-left: auto; }
+      .cycle-body { padding: .2rem .5rem .5rem; }
+      .step { border-top: 1px dotted #1b2230; }
+      .step-h { display: flex; align-items: center; gap: .5rem; padding: .35rem .3rem; cursor: pointer; font-size: 12px; }
+      .step-h:hover { background: #11151f; }
+      .step-idx { color: #6c7086; }
+      .step-role { color: #cba6f7; font-weight: 600; }
+      .step-status { font-size: 11px; }
+      .step-status.running { color: #a6e3a1; }
+      .step-status.done { color: #6c7086; }
+      .step-status.error { color: #f38ba8; }
+      .step-sum { color: #bac2de; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .step-detail { padding: .2rem .3rem .5rem; display: flex; flex-direction: column; gap: .4rem; }
+      .io-block { border: 1px solid #1f2430; border-radius: 4px; }
+      .io-label { font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: #6c7086; padding: .25rem .5rem; border-bottom: 1px solid #1f2430; }
+      .io-text { margin: 0; padding: .4rem .5rem; font-size: 12px; color: #cdd6f4; white-space: pre-wrap; word-break: break-word; max-height: 240px; overflow-y: auto; }
     </style>
   </head>
   <body>
@@ -69,7 +118,12 @@
       </nav>
       <div class="focus-main">
         <div id="focus-header"><span class="fh-empty">no lane focused</span></div>
+        <div id="view-toggle">
+          <button type="button" data-view="cycles" class="active">Cycles</button>
+          <button type="button" data-view="stream">Stream</button>
+        </div>
         <div class="focus-body">
+          <section id="cycles" class="cycles"></section>
           <section id="agents" class="agents"></section>
           <aside id="timeline" class="timeline">
             <h2>decision timeline</h2>
@@ -78,6 +132,6 @@
         </div>
       </div>
     </div>
-    <script src="/monitor.js"></script>
+    <script type="module" src="/monitor.js"></script>
   </body>
 </html>
