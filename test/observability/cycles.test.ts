@@ -16,6 +16,8 @@ const aErr = (role: string) =>
   ({ channel: "agent", role, kind: "agent.error", at: "t", text: "err" });
 const aExit = (role: string) =>
   ({ channel: "agent", role, kind: "agent.exit", at: "t", exitCode: 0 });
+const orchNoise = (kind: string) =>
+  ({ channel: "orchestrator", role: "orchestrator", kind, at: "t", data: {} });
 
 describe("buildCycles", () => {
   it("groups a multi-agent cycle into ordered steps", () => {
@@ -91,5 +93,19 @@ describe("buildCycles", () => {
   it("falls back to the terminal event kind when a step has no text", () => {
     const [c] = buildCycles([cycleStart(1), aStart("scout", "x"), aExit("scout"), cycleDone(1)]);
     expect(c.steps[0].summary).toBe("agent.exit");
+  });
+
+  it("ignores non-cycle orchestrator events inside a step", () => {
+    const [c] = buildCycles([
+      cycleStart(1),
+      aStart("scout", "x"),
+      orchNoise("run.transition"),
+      aExit("scout"),
+      cycleDone(1),
+    ]);
+    const step = c.steps[0];
+    expect(step.output).toBe("");
+    expect(step.summary).toBe("agent.exit"); // terminal agent event, not run.transition
+    expect(step.events.some((e) => e.kind === "run.transition")).toBe(false);
   });
 });

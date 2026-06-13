@@ -68,6 +68,10 @@ export function buildCycles(events) {
 
     // Any other event attaches to the open step, if there is one.
     ensureCycle();
+    // Only agent events belong to a step. Non-cycle orchestrator events
+    // (run.transition, run.result, attempt.recorded, …) also flow through this
+    // stream; ignore them here so they can't pollute a step's output/summary.
+    if (e.channel !== "agent") continue;
     if (!step) continue;
     step.events.push(e);
     if (e.kind === "agent.text" && e.text) {
