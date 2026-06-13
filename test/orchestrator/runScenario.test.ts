@@ -95,4 +95,23 @@ describe("runScenario", () => {
     expect(invoked).toBe(false);
     expect(rec.runnerNotes).toContain("setup hook");
   });
+
+  it("blocks (agent never runs) when no setup hook resolves and requireSetupHook is on", async () => {
+    let invoked = false;
+    const engine = new StubEngine({ script: () => { invoked = true; return [{ kind: "agent.exit", role: "runner", at: "t", exitCode: 0 }]; } });
+    const d = setup({ engine });
+    const config = { ...d.config, hooks: { ...d.config.hooks, requireSetupHook: true } };
+    const rec = await runScenario({ ...d, config, targetRepo: d.dir, sink: () => {} }, scenario());
+    expect(rec.status).toBe("blocked");
+    expect(invoked).toBe(false);
+    expect(rec.runnerNotes.toLowerCase()).toContain("no setup hook");
+  });
+
+  it("warns but still runs when no setup hook resolves and requireSetupHook is off (default)", async () => {
+    const events: { text?: string }[] = [];
+    const d = setup({ engine: runnerEngine("passed") });
+    const rec = await runScenario({ ...d, targetRepo: d.dir, sink: (e) => events.push(e) }, scenario());
+    expect(rec.status).toBe("passed");
+    expect(events.some((e) => (e.text ?? "").toLowerCase().includes("no setup hook"))).toBe(true);
+  });
 });

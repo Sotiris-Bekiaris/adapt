@@ -33,7 +33,22 @@ export async function runScenario(deps: RunScenarioDeps, scenario: ParsedScenari
   const ws = workspacePaths(targetRepo);
   const run = orchestrator.createRun(scenario.meta.id, scenario.meta.title);
 
-  const setup = runHook(scenario.meta.hooks?.setup ?? config.hooks.setup, targetRepo);
+  const setupCmd = scenario.meta.hooks?.setup ?? config.hooks.setup;
+  if (!setupCmd) {
+    if (config.hooks.requireSetupHook) {
+      return orchestrator.recordResult(run.runId, {
+        status: "blocked",
+        runnerNotes: `no setup hook resolved for ${scenario.meta.id}; DB state unmanaged (hooks.requireSetupHook is on)`,
+      });
+    }
+    sink({
+      kind: "agent.text",
+      role: "runner",
+      at: new Date().toISOString(),
+      text: `WARN: no setup hook for ${scenario.meta.id}; running against unmanaged DB state`,
+    });
+  }
+  const setup = runHook(setupCmd, targetRepo);
   if (!setup.ok) {
     return orchestrator.recordResult(run.runId, {
       status: "blocked",
