@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const DEMAND_STATUSES = ["proposed", "approved", "rejected"] as const;
+export const DEMAND_STATUSES = ["proposed", "approved", "rejected", "duplicate"] as const;
 
 export const DemandSchema = z.object({
   id: z.string().regex(/^DMD-\d+$/, "id must look like DMD-001"),
@@ -11,6 +11,7 @@ export const DemandSchema = z.object({
   status: z.enum(DEMAND_STATUSES),
   critique: z.string().nullable(),
   createdAt: z.string(),
+  duplicateOf: z.string().nullable().default(null),
 });
 
 export type Demand = z.infer<typeof DemandSchema>;
@@ -22,6 +23,6 @@ export function newDemand(args: {
   return {
     id: args.id, title: args.title, rationale: args.rationale,
     proposedScenarios: args.proposedScenarios, source: "dreamer",
-    status: "proposed", critique: null, createdAt: args.createdAt,
+    status: "proposed", critique: null, createdAt: args.createdAt, duplicateOf: null,
   };
 }
