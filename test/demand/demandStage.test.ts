@@ -27,7 +27,7 @@ function demandEngine() {
         { title: "Bloat feature", rationale: "r", proposedScenarios: ["do y"] },
       ] }), "utf8");
     } else if (s.role === "critic") {
-      const approve = s.prompt.includes("DMD-001");
+      const approve = s.prompt.includes("PROPOSED DEMAND DMD-001");
       writeFileSync(path!, JSON.stringify({ decision: approve ? "approved" : "rejected", critique: "c" }), "utf8");
     } else if (s.role === "generator") {
       const genDir = s.prompt.match(/directory:\s*(\S+)/)![1]!;
