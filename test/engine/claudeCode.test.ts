@@ -15,7 +15,7 @@ describe("ClaudeCodeEngine", () => {
   it("resolves logical MCP names to Claude config JSON", () => {
     const parsed = JSON.parse(resolveMcpConfig("playwright"));
     expect(parsed.mcpServers.playwright.command).toMatch(/^npx(\.cmd)?$/);
-    expect(parsed.mcpServers.playwright.args).toEqual(["-y", "@playwright/mcp@latest"]);
+    expect(parsed.mcpServers.playwright.args).toEqual(["-y", "@playwright/mcp@latest", "--isolated"]);
   });
 
   it("builds strict MCP args from role-scoped server names", () => {
@@ -27,7 +27,7 @@ describe("ClaudeCodeEngine", () => {
     const idx = args.indexOf("--mcp-config");
     expect(idx).toBeGreaterThan(-1);
     const parsed = JSON.parse(args[idx + 1]!);
-    expect(parsed.mcpServers.playwright.args).toEqual(["-y", "@playwright/mcp@latest"]);
+    expect(parsed.mcpServers.playwright.args).toEqual(["-y", "@playwright/mcp@latest", "--isolated"]);
   });
 
   it("spawns the command, parses streamed lines, and emits start/exit", async () => {

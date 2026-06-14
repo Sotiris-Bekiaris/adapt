@@ -31,7 +31,10 @@ function mcpServerConfig(name: string, command: string, args: string[]): string 
 export function resolveMcpConfig(config: string): string {
   switch (config) {
     case "playwright":
-      return mcpServerConfig("playwright", npxCommand(), ["-y", "@playwright/mcp@latest"]);
+      // --isolated: in-memory browser profile, discarded at session end. Without it,
+      // @playwright/mcp shares a persistent on-disk profile across every MCP instance,
+      // so login/cookie state from one scenario leaks into the next.
+      return mcpServerConfig("playwright", npxCommand(), ["-y", "@playwright/mcp@latest", "--isolated"]);
     case "chrome-devtools":
       return mcpServerConfig("chrome-devtools", npxCommand(), ["-y", "chrome-devtools-mcp@latest"]);
     case "jira":
