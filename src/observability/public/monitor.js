@@ -97,7 +97,7 @@ function isCycleOpen(c, isNewest) {
   return expanded.has(key);
 }
 
-function ioBlock(label, text) {
+function ioBlock(label, text, scrollKey) {
   const block = document.createElement("div");
   block.className = "io-block";
   const h = document.createElement("div");
@@ -105,6 +105,7 @@ function ioBlock(label, text) {
   h.textContent = label;
   const pre = document.createElement("pre");
   pre.className = "io-text";
+  pre.dataset.scrollkey = scrollKey;
   pre.textContent = text;
   block.append(h, pre);
   return block;
@@ -144,8 +145,8 @@ function renderStep(c, s) {
     const prev = s.index > 1 ? c.steps[s.index - 2] : null;
     const inLabel = prev ? `INPUT (from #${prev.index} ${prev.role})` : "INPUT (cycle seed)";
     detail.append(
-      ioBlock(inLabel, s.input ?? "(no prompt logged)"),
-      ioBlock("OUTPUT", s.output || "(no output)"),
+      ioBlock(inLabel, s.input ?? "(no prompt logged)", key + ":in"),
+      ioBlock("OUTPUT", s.output || "(no output)", key + ":out"),
     );
     row.append(detail);
   }
@@ -192,11 +193,25 @@ function renderCycle(c, isNewest) {
 }
 
 function renderCycles() {
+  // Snapshot scroll position + user-resized height of every io-text pane, keyed
+  // by step, so a full rebuild on each live event doesn't reset the reader to
+  // the top or discard their drag-resize.
+  const saved = new Map();
+  for (const el of cyclesEl.querySelectorAll("[data-scrollkey]")) {
+    saved.set(el.dataset.scrollkey, { top: el.scrollTop, height: el.style.height });
+  }
   cyclesEl.replaceChildren();
   if (!focusedLane) return;
   const cycles = buildCycles(laneEvents.get(focusedLane) || []);
   for (let i = cycles.length - 1; i >= 0; i--) {
     cyclesEl.append(renderCycle(cycles[i], i === cycles.length - 1));
+  }
+  // Restore height before scrollTop: scrollTop clamps to the element's height.
+  for (const el of cyclesEl.querySelectorAll("[data-scrollkey]")) {
+    const s = saved.get(el.dataset.scrollkey);
+    if (!s) continue;
+    if (s.height) el.style.height = s.height;
+    el.scrollTop = s.top;
   }
 }
 
