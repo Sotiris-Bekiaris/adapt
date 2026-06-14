@@ -78,8 +78,14 @@ export function buildCycles(events) {
       step.output += e.text;
       step.summary = summarize(e.text);
     }
-    if (e.kind === "agent.error") step.status = "error";
-    if (e.kind === "agent.exit") closeStep(step.status === "error" ? "error" : "done");
+    // A step's success is the agent's EXIT CODE, not the presence of an
+    // agent.error event. The claude CLI emits benign stderr (e.g. "no stdin
+    // data received in 3s, proceeding without it") as agent.error, yet exits 0
+    // — that must NOT mark the step failed. Only a non-zero exit is an error.
+    if (e.kind === "agent.exit") {
+      const code = typeof e.exitCode === "number" ? e.exitCode : 0;
+      closeStep(code === 0 ? "done" : "error");
+    }
   }
 
   // Summary fallback: terminal event kind when a step produced no text.

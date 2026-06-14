@@ -14,8 +14,8 @@ const aText = (role: string, text: string) =>
   ({ channel: "agent", role, kind: "agent.text", at: "t", text });
 const aErr = (role: string) =>
   ({ channel: "agent", role, kind: "agent.error", at: "t", text: "err" });
-const aExit = (role: string) =>
-  ({ channel: "agent", role, kind: "agent.exit", at: "t", exitCode: 0 });
+const aExit = (role: string, exitCode = 0) =>
+  ({ channel: "agent", role, kind: "agent.exit", at: "t", exitCode });
 const orchNoise = (kind: string) =>
   ({ channel: "orchestrator", role: "orchestrator", kind, at: "t", data: {} });
 
@@ -66,11 +66,20 @@ describe("buildCycles", () => {
     expect(c.status).toBe("error");
   });
 
-  it("marks a step that errored", () => {
+  it("marks a step errored only on a non-zero exit code", () => {
     const c = buildCycles([
-      cycleStart(1), aStart("dreamer", "x"), aErr("dreamer"), aExit("dreamer"), cycleDone(1),
+      cycleStart(1), aStart("dreamer", "x"), aExit("dreamer", 1), cycleDone(1),
     ])[0]!;
     expect(c.steps[0]!.status).toBe("error");
+  });
+
+  it("keeps a step done when it emits stderr (agent.error) but exits cleanly", () => {
+    // The claude CLI emits benign stderr (e.g. the no-stdin warning) as
+    // agent.error while still exiting 0 — the step must read as done, not error.
+    const c = buildCycles([
+      cycleStart(1), aStart("dreamer", "x"), aErr("dreamer"), aText("dreamer", "idea"), aExit("dreamer", 0), cycleDone(1),
+    ])[0]!;
+    expect(c.steps[0]!.status).toBe("done");
   });
 
   it("leaves an unfinished cycle and step as running", () => {

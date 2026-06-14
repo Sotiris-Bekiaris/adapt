@@ -70,6 +70,11 @@ export class ClaudeCodeEngine implements AgentEngine {
       const child = spawn(this.command, this.argsBuilder(spec), {
         cwd: spec.cwd,
         env: { ...process.env, ...spec.env },
+        // Close stdin: the prompt is passed via the `-p` arg, so claude never
+        // needs stdin. Leaving it an open pipe makes the CLI wait 3s and emit
+        // "no stdin data received in 3s" to stderr (surfaced as a spurious
+        // agent.error). Ignoring it removes both the delay and the false error.
+        stdio: ["ignore", "pipe", "pipe"],
       });
 
       const events: AgentEvent[] = [];

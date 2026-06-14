@@ -9,11 +9,12 @@ export interface ConsoleEvent {
   text?: string;
   tool?: string;
   data?: unknown;
+  exitCode?: number;
   lane?: string;
 }
 
 export function fromAgentEvent(e: AgentEvent): ConsoleEvent {
-  return { channel: "agent", role: e.role, kind: e.kind, at: e.at, text: e.text, tool: e.tool, data: e.data };
+  return { channel: "agent", role: e.role, kind: e.kind, at: e.at, text: e.text, tool: e.tool, data: e.data, exitCode: e.exitCode };
 }
 
 export function fromOrchestratorEvent(e: OrchestratorEvent): ConsoleEvent {
