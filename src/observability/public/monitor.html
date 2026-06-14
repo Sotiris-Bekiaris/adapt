@@ -105,6 +105,12 @@
       .io-block { border: 1px solid #1f2430; border-radius: 4px; }
       .io-label { font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: #6c7086; padding: .25rem .5rem; border-bottom: 1px solid #1f2430; }
       .io-text { margin: 0; padding: .4rem .5rem; font-size: 12px; color: #cdd6f4; white-space: pre-wrap; word-break: break-word; height: 200px; min-height: 48px; max-height: 80vh; overflow-y: auto; resize: vertical; }
+      .controls-bar { display: flex; gap: 4px; flex-wrap: wrap; padding: 6px; }
+      .controls-bar button, .lane-controls button { font: inherit; cursor: pointer; padding: 2px 6px; }
+      .lane-controls { display: flex; gap: 3px; flex-wrap: wrap; margin-top: 4px; }
+      .lane-controls input { width: 48px; }
+      .lane.paused .dot { color: #d8a657; }
+      button:disabled { opacity: 0.4; cursor: default; }
     </style>
   </head>
   <body>
@@ -113,6 +119,13 @@
       <span id="status" class="disconnected">connecting…</span>
     </header>
     <div class="page">
+      <div id="global-controls" class="controls-bar">
+        <button data-act="start" data-lane="*">▶ start all</button>
+        <button data-act="pause" data-lane="*">⏸ pause all</button>
+        <button data-act="continue" data-lane="*">▶ continue all</button>
+        <button data-act="stop" data-lane="*">■ stop all</button>
+        <input id="global-maxcycles" type="number" min="0" placeholder="∞" title="maxCycles for start (blank=∞)" />
+      </div>
       <nav id="lanes">
         <div class="lanes-h">lanes</div>
       </nav>

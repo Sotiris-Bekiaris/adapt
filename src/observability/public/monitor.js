@@ -8,6 +8,8 @@ const timelineEl = document.getElementById("timeline-list");
 const focusMainQuery = () => document.querySelector(".focus-body");
 const cyclesEl = document.getElementById("cycles");
 const toggleEl = document.getElementById("view-toggle");
+const globalControlsEl = document.getElementById("global-controls");
+const globalMaxCyclesEl = document.getElementById("global-maxcycles");
 
 const BUFFER_CAP = 500;
 
@@ -23,6 +25,26 @@ const seenCycleKeys = new Set(); // cycles whose default-open has been applied
 
 function laneMeta(laneId) {
   return lanes.find((l) => l.laneId === laneId) || null;
+}
+
+// --- lane controls ---
+
+function sendControl(lane, action, maxCyclesEl) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  const msg = { type: "control", lane, action };
+  if (maxCyclesEl && (action === "start" || action === "restart")) {
+    const v = parseInt(maxCyclesEl.value, 10);
+    msg.maxCycles = Number.isFinite(v) && v > 0 ? v : null;
+  }
+  ws.send(JSON.stringify(msg));
+}
+
+if (globalControlsEl) {
+  globalControlsEl.addEventListener("click", (ev) => {
+    const btn = ev.target.closest("button[data-act]");
+    if (!btn) return;
+    sendControl("*", btn.dataset.act, globalMaxCyclesEl);
+  });
 }
 
 // --- focused-pane rendering (mirrors app.js: textContent only, columns by role) ---
@@ -265,7 +287,7 @@ function renderSidebar() {
   for (const lane of lanes) {
     const running = lane.status === "running";
     const row = document.createElement("div");
-    row.className = "lane " + (running ? "running" : "stopped");
+    row.className = "lane " + (running ? "running" : "stopped") + (lane.paused ? " paused" : "");
     if (lane.laneId === focusedLane) row.classList.add("active");
 
     const top = document.createElement("div");
@@ -286,10 +308,44 @@ function renderSidebar() {
     const sep = document.createTextNode(" · ");
     const cycle = document.createElement("span");
     cycle.className = "lane-cycle";
-    cycle.textContent = `cycle ${lane.cycle ?? 0}`;
+    cycle.textContent = `cycle ${lane.cycle ?? 0}` + (lane.maxCycles != null ? `/${lane.maxCycles}` : "/∞") + (lane.paused ? " (paused)" : "");
     meta.append(model, sep, cycle);
 
     row.append(top, meta);
+
+    const paused = !!lane.paused;
+    const controls = document.createElement("div");
+    controls.className = "lane-controls";
+
+    const maxInput = document.createElement("input");
+    maxInput.type = "number";
+    maxInput.min = "0";
+    maxInput.placeholder = "∞";
+    maxInput.title = "maxCycles (blank=∞)";
+    if (lane.maxCycles != null) maxInput.value = String(lane.maxCycles);
+    maxInput.addEventListener("click", (ev) => ev.stopPropagation());
+
+    const mkBtn = (label, action, enabled) => {
+      const b = document.createElement("button");
+      b.textContent = label;
+      b.disabled = !enabled;
+      b.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        sendControl(lane.laneId, action, maxInput);
+      });
+      return b;
+    };
+
+    controls.append(
+      mkBtn("▶", "start", !running),
+      mkBtn("⏸", "pause", running && !paused),
+      mkBtn("▶▶", "continue", running && paused),
+      mkBtn("⟳", "restart", running),
+      mkBtn("■", "stop", running),
+      maxInput,
+    );
+    row.append(controls);
+
     row.addEventListener("click", () => focusLane(lane.laneId));
     lanesEl.append(row);
   }
