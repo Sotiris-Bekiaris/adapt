@@ -68,7 +68,21 @@ export async function startLaneLoop(opts: StartLaneLoopOptions): Promise<number>
   });
   // Touch laneEnv so the namespace is part of this process too (parity with detached env).
   Object.assign(process.env, laneEnv(manifest));
-  return runner(opts.worktree);
+  // Record our own pid so `laneLoopStatus` recognizes a foreground loop as running —
+  // not just --detach loops. The monitor only opens a live WS to lanes it sees as
+  // running, so without this a foreground autonomous loop streams nothing. Removed on
+  // exit, but only if the pidfile is still ours (don't clobber a detached one).
+  const pf = pidfilePath(opts.worktree);
+  writeFileSync(pf, `${process.pid}\n`, "utf8");
+  try {
+    return await runner(opts.worktree);
+  } finally {
+    try {
+      if (existsSync(pf) && Number(readFileSync(pf, "utf8").trim()) === process.pid) unlinkSync(pf);
+    } catch {
+      /* ignore cleanup races */
+    }
+  }
 }
 
 /** Core of `adapt lane stop`: signal the loop process and remove the pidfile. */

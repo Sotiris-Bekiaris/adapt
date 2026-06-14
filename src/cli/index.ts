@@ -69,13 +69,15 @@ program
   .command("run")
   .description("Run the organism continuously (bounded evolve loop) until a guardrail or Ctrl-C")
   .argument("<targetRepo>", "path to the target product repository")
-  .action(async (targetRepo: string) => {
+  .option("--console <port>", "serve the live event console (WebSocket) on this port for the monitor to attach")
+  .action(async (targetRepo: string, options: { console?: string }) => {
     const { runCmd, requestRunStop } = await import("./commands/run.ts");
     const signal = { stopped: false };
     process.on("SIGINT", () => {
       if (!requestRunStop(signal, (msg) => process.stderr.write(`${msg}\n`))) process.exit(130);
     });
-    const res = await runCmd({ targetRepo, signal });
+    const consolePort = options.console !== undefined ? Number(options.console) : undefined;
+    const res = await runCmd({ targetRepo, signal, consolePort });
     process.exit(res.code);
   });
 
