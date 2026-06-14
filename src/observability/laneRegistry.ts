@@ -3,6 +3,7 @@ import type { ConsoleEvent } from "./events.ts";
 import { LaneSource, type LaneInfo, type LaneStatus } from "./laneSource.ts";
 import { listLanes } from "../lanes/lane.ts";
 import { slotIndex } from "../lanes/ports.ts";
+import { readControl } from "../lanes/control.ts";
 
 export interface LaneSummary {
   laneId: string;
@@ -10,6 +11,8 @@ export interface LaneSummary {
   baseline: string;
   status: LaneStatus;
   cycle: number;
+  paused: boolean;
+  maxCycles: number | null;
 }
 
 export interface LaneRegistryOpts {
@@ -48,12 +51,15 @@ export class LaneRegistry {
   summaries(): LaneSummary[] {
     const out: LaneSummary[] = [];
     for (const source of this.sources.values()) {
+      const ctl = readControl(source.info.worktree);
       out.push({
         laneId: source.info.laneId,
         model: source.info.model,
         baseline: source.info.baseline,
         status: source.status(),
         cycle: source.cycle(),
+        paused: ctl.paused,
+        maxCycles: ctl.maxCycles ?? null,
       });
     }
     return out;
