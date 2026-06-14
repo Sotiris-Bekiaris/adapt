@@ -58,10 +58,10 @@ export const AdaptConfigSchema = z.object({
     gradPassThreshold: z.number().int().positive().default(3),
   }).default({}),
 
-  // Run guardrails (blueprint §14)
+  // Run guardrails (blueprint §14). null = infinite (default loops forever).
   run: z.object({
-    maxCycles: z.number().int().positive().default(10),
-    maxWallClockSeconds: z.number().int().positive().default(3600),
+    maxCycles: z.number().int().positive().nullable().default(null),
+    maxWallClockSeconds: z.number().int().positive().nullable().default(null),
     pauseSeconds: z.number().int().nonnegative().default(5),
     maxConsecutiveErrors: z.number().int().positive().default(3),
   }).default({}),

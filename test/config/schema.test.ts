@@ -38,8 +38,8 @@ describe("AdaptConfigSchema", () => {
 
   it("defaults the run guardrails", () => {
     const c = AdaptConfigSchema.parse({ targetRepoPath: "/repo", appBaseUrl: "http://localhost:3000" });
-    expect(c.run.maxCycles).toBe(10);
-    expect(c.run.maxWallClockSeconds).toBe(3600);
+    expect(c.run.maxCycles).toBeNull();
+    expect(c.run.maxWallClockSeconds).toBeNull();
     expect(c.run.pauseSeconds).toBe(5);
     expect(c.run.maxConsecutiveErrors).toBe(3);
   });
