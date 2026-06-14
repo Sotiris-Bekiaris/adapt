@@ -45,6 +45,21 @@ describe("StateStore", () => {
     s.close();
   });
 
+  it("reaps orphaned running runs and resets their scenarios", () => {
+    const s = mem();
+    s.upsertRun({ runId: "RUN-1", scenarioId: "SCN-001", status: "running", startedAt: "t0", finishedAt: null });
+    s.upsertRun({ runId: "RUN-2", scenarioId: "SCN-002", status: "passed", startedAt: "t0", finishedAt: "t1" });
+    s.setScenarioState("SCN-001", "running");
+
+    const reaped = s.reapOrphanedRuns();
+
+    expect(reaped).toEqual(["RUN-1"]);
+    expect(s.getRun("RUN-1")?.status).toBe("inconclusive");
+    expect(s.getRun("RUN-2")?.status).toBe("passed"); // untouched
+    expect(s.getScenarioState("SCN-001")).toBe("ready");
+    s.close();
+  });
+
   it("tracks consecutive scenario passes", () => {
     const s = mem();
     expect(s.getScenarioPasses("SCN-001")).toBe(0);

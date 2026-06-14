@@ -52,6 +52,10 @@ export async function runCmd(opts: RunCmdOptions): Promise<RunCmdResult> {
     obsServer = opts.consolePort ? new ObservabilityServer(bus) : undefined;
     if (obsServer) await obsServer.start(opts.consolePort!);
 
+    for (const runId of store.reapOrphanedRuns()) {
+      bus.publish(fromOrchestratorEvent({ type: "run.reaped", at: new Date().toISOString(), runId }));
+    }
+
     const summary = await runContinuous({
       engine, store, config, targetRepo: opts.targetRepo,
       sink: (e) => bus.publish(fromAgentEvent(e)),

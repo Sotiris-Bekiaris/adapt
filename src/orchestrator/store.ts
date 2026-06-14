@@ -115,6 +115,21 @@ export class StateStore {
     `).run(scenarioId);
   }
 
+  /** Flip every run left at status="running" (orphaned by a killed loop) to
+   *  "inconclusive" and reset its scenario to "ready" so the next cycle re-runs
+   *  it cleanly. Returns the affected runIds. */
+  reapOrphanedRuns(): string[] {
+    const rows = this.findRunsByStatus("running");
+    const reap = this.db.transaction((items: RunRow[]) => {
+      for (const row of items) {
+        this.upsertRun({ ...row, status: "inconclusive" });
+        this.setScenarioState(row.scenarioId, "ready");
+      }
+    });
+    reap(rows);
+    return rows.map((r) => r.runId);
+  }
+
   close(): void {
     this.db.close();
   }
