@@ -94,8 +94,12 @@ API (pure fs, injectable for tests):
 ### 2. `src/orchestrator/run.ts` — `runContinuous` changes
 
 - Inject a `readControl` dep (default: real fs reader).
-- **maxCycles**: read control at each loop-top. `null` → skip the cycle-limit
-  check (infinite). A number → honor it, overriding `config.run.maxCycles`.
+- **maxCycles precedence**: read control at each loop-top. Control's `maxCycles`
+  field is `undefined` (unset) → fall back to `config.run.maxCycles`; `null` →
+  infinite; a number → that bound. `config.run.maxCycles` schema default becomes
+  `null` (infinite), so a fresh lane with no control file loops forever — the
+  "default ∞" requirement. `config.run.maxWallClockSeconds` likewise defaults to
+  `null` (infinite) so the default loop truly runs forever.
 - **pause**: after a cycle completes (state already persisted to `state.db`), if
   `control.paused`, enter a poll-wait loop (chunked `sleep`, re-read control)
   until unpaused, `stopRequested`, or `signal.stopped`. Emit `cycle.paused` /
@@ -103,9 +107,7 @@ API (pure fs, injectable for tests):
 - **stopRequested**: treated like `signal.stopped` → return `stoppedBy:"control"`.
 - Add `"control"` to the `StopReason` union.
 - **maxCycles reached → process exits** (lane shows stopped, env freed) — matches
-  current behavior. Config remains the fallback only when the control file is
-  absent and a config limit is desired; effective default is infinite via
-  control's `null`.
+  current behavior.
 - **Counter semantics**: maxCycles counts cycles within the current process run.
   A restart resets the counter (acceptable — the default is infinite; maxCycles
   is mainly for bounded test runs). Documented, not persisted.
