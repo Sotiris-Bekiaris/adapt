@@ -3,8 +3,9 @@ import type { AdaptConfig } from "../config/schema.ts";
 import { StateStore } from "./store.ts";
 import type { OrchestratorEvent } from "./orchestrator.ts";
 import { runEvolve, type EvolveSummary } from "./evolve.ts";
+import { readControl, type LaneControl } from "../lanes/control.ts";
 
-export type StopReason = "maxCycles" | "wallClock" | "errors" | "signal";
+export type StopReason = "maxCycles" | "wallClock" | "errors" | "signal" | "control";
 
 export interface ContinuousDeps {
   engine: AgentEngine;
@@ -18,6 +19,8 @@ export interface ContinuousDeps {
   sleep?: (ms: number) => Promise<void>;
   clockMs?: () => number;
   signal?: { stopped: boolean };
+  /** Control-file reader; defaults to the real fs reader. Injectable for tests. */
+  readControl?: (worktree: string) => LaneControl;
 }
 
 export interface ContinuousSummary {
@@ -26,31 +29,30 @@ export interface ContinuousSummary {
   evolveSummaries: EvolveSummary[];
 }
 
-/** Loop runEvolve until a guardrail trips. Deterministic; injectable sleep/clock/signal for tests. */
+/** Loop runEvolve until a guardrail trips. Deterministic; injectable sleep/clock/signal/control for tests. */
 export async function runContinuous(deps: ContinuousDeps): Promise<ContinuousSummary> {
   const r = deps.config.run;
   const now = deps.now ?? (() => new Date().toISOString());
   const clockMs = deps.clockMs ?? (() => Date.now());
   const sleep = deps.sleep ?? ((ms) => new Promise<void>((res) => setTimeout(res, ms)));
+  const readCtl = deps.readControl ?? readControl;
   const startMs = clockMs();
-  const wallClockExceeded = () => (clockMs() - startMs) / 1000 >= r.maxWallClockSeconds;
+  const wallClockExceeded = () =>
+    r.maxWallClockSeconds !== null && (clockMs() - startMs) / 1000 >= r.maxWallClockSeconds;
+
+  const effectiveMaxCycles = (ctl: LaneControl): number | null =>
+    ctl.maxCycles !== undefined ? ctl.maxCycles : r.maxCycles;
+
   const pauseBetweenCycles = async (): Promise<StopReason | undefined> => {
     const pauseMs = r.pauseSeconds * 1000;
-    if (pauseMs === 0) {
-      await sleep(0);
-      if (deps.signal?.stopped) return "signal";
-      if (wallClockExceeded()) return "wallClock";
-      return undefined;
-    }
-
     let remainingMs = pauseMs;
-    while (remainingMs > 0) {
+    do {
       if (deps.signal?.stopped) return "signal";
       if (wallClockExceeded()) return "wallClock";
-      const chunkMs = Math.min(250, remainingMs);
+      const chunkMs = pauseMs === 0 ? 0 : Math.min(250, remainingMs);
       await sleep(chunkMs);
       remainingMs -= chunkMs;
-    }
+    } while (remainingMs > 0);
     if (deps.signal?.stopped) return "signal";
     if (wallClockExceeded()) return "wallClock";
     return undefined;
@@ -62,7 +64,24 @@ export async function runContinuous(deps: ContinuousDeps): Promise<ContinuousSum
 
   while (true) {
     if (deps.signal?.stopped) return { cycles, stoppedBy: "signal", evolveSummaries };
-    if (cycles >= r.maxCycles) return { cycles, stoppedBy: "maxCycles", evolveSummaries };
+
+    let control = readCtl(deps.targetRepo);
+
+    if (control.paused) {
+      deps.emit({ type: "cycle.paused", at: now(), cycle: cycles });
+      while (control.paused) {
+        if (deps.signal?.stopped) return { cycles, stoppedBy: "signal", evolveSummaries };
+        if (control.stopRequested) return { cycles, stoppedBy: "control", evolveSummaries };
+        if (wallClockExceeded()) return { cycles, stoppedBy: "wallClock", evolveSummaries };
+        await sleep(250);
+        control = readCtl(deps.targetRepo);
+      }
+      deps.emit({ type: "cycle.resumed", at: now(), cycle: cycles });
+    }
+
+    if (control.stopRequested) return { cycles, stoppedBy: "control", evolveSummaries };
+    const maxCycles = effectiveMaxCycles(control);
+    if (maxCycles !== null && cycles >= maxCycles) return { cycles, stoppedBy: "maxCycles", evolveSummaries };
     if (wallClockExceeded()) return { cycles, stoppedBy: "wallClock", evolveSummaries };
 
     deps.emit({ type: "cycle.start", at: now(), cycle: cycles + 1 });
@@ -86,7 +105,7 @@ export async function runContinuous(deps: ContinuousDeps): Promise<ContinuousSum
     if (errored && consecutiveErrors >= r.maxConsecutiveErrors) {
       return { cycles, stoppedBy: "errors", evolveSummaries };
     }
-    if (cycles >= r.maxCycles) return { cycles, stoppedBy: "maxCycles", evolveSummaries };
+    if (maxCycles !== null && cycles >= maxCycles) return { cycles, stoppedBy: "maxCycles", evolveSummaries };
     if (wallClockExceeded()) return { cycles, stoppedBy: "wallClock", evolveSummaries };
     const stoppedBy = await pauseBetweenCycles();
     if (stoppedBy) return { cycles, stoppedBy, evolveSummaries };
