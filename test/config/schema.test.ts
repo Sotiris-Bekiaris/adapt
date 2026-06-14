@@ -10,7 +10,9 @@ describe("AdaptConfigSchema", () => {
     expect(parsed.engine.type).toBe("claude-code");
     expect(parsed.console.port).toBe(4399);
     expect(parsed.limits.maxFixAttempts).toBe(2);
-    expect(parsed.jira.enabled).toBe(false);
+    expect(parsed.jira.enabled).toBe(true);
+    expect(parsed.jira.baseUrl).toBe("http://localhost:8080");
+    expect(parsed.mcp.jira.enabled).toBe(true);
     expect(parsed.mcp.playwright.enabled).toBe(true);
   });
 

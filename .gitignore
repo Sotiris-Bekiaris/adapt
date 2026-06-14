@@ -4,6 +4,7 @@ config.json
 .env.*
 *.local
 scripts/deepseek.env
+scripts/jira.env
 
 # agent runtime artifacts (generated, not source of truth for the design)
 scenario-runs/

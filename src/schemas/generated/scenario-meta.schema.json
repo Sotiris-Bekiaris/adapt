@@ -26,7 +26,8 @@
         "blocked",
         "invalid",
         "needs-product-review",
-        "deprecated"
+        "deprecated",
+        "graduated"
       ]
     },
     "priority": {

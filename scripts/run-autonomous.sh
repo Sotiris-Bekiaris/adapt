@@ -24,9 +24,29 @@ LANES=( "$@" ); [ ${#LANES[@]} -eq 0 ] && LANES=( a )
 
 ENVF="$HERE/deepseek.env"; [ -f "$TARGET/.adapt/deepseek.env" ] && ENVF="$TARGET/.adapt/deepseek.env"
 [ -f "$ENVF" ] || { echo "error: no deepseek.env (looked in $HERE and $TARGET/.adapt)"; exit 1; }
+# Jira (mcp-atlassian) creds — optional. Per-target override else shared. Sourced into the agent
+# env so JIRA_URL/JIRA_PERSONAL_TOKEN reach the spawned `claude` (and adapt's jira --mcp-config).
+JIRAF="$HERE/jira.env"; [ -f "$TARGET/.adapt/jira.env" ] && JIRAF="$TARGET/.adapt/jira.env"
+[ -f "$JIRAF" ] || JIRAF=""
 adapt(){ npm --prefix "$ADAPT" run --silent adapt -- "$@"; }
 
-set -a; . "$ENVF"; set +a; unset ANTHROPIC_API_KEY
+set -a; . "$ENVF"; [ -n "$JIRAF" ] && . "$JIRAF"; set +a; unset ANTHROPIC_API_KEY
+
+# Jira server — adapt defaults jira ON. If a JIRA_URL is configured, make sure it answers; bring up
+# ../jira-docker if it's installed and not running. A dead Jira just means the jira MCP reports no
+# connection (agents still run) — so this is best-effort, never fatal.
+if [ -n "${JIRA_URL:-}" ]; then
+  if curl -fsS -o /dev/null --max-time 3 "$JIRA_URL"; then echo "jira: up at $JIRA_URL"
+  else
+    JDOCK="$(cd "$ADAPT/../jira-docker/deploy" 2>/dev/null && pwd || true)"
+    if [ -n "$JDOCK" ] && [ -f "$JDOCK/docker-compose.prod.yml" ]; then
+      echo "jira: not responding — starting ../jira-docker (first boot is slow) …"
+      ( cd "$JDOCK" && docker compose -f docker-compose.prod.yml up -d ) || echo "jira: compose up failed (continuing)"
+    else
+      echo "jira: $JIRA_URL not responding and no jira-docker deploy found — agents run without Jira"
+    fi
+  fi
+fi
 
 # proxy — REQUIRED: rewrites subagent thinking:disabled -> adaptive so deepseek-v4-pro never 400s
 if pgrep -f "ds-proxy.mjs" >/dev/null; then echo "ds-proxy: already running"
@@ -45,7 +65,7 @@ for spec in "${LANES[@]}"; do
     else adapt lane create "$id" "$TARGET" --baseline v1; fi || { echo "lane $id: create failed (see above)"; continue; }
   fi
   echo "lane $id: starting loop (detached) …"
-  nohup bash -c "set -a; . '$ENVF'; set +a; unset ANTHROPIC_API_KEY; npm --prefix '$ADAPT' run --silent adapt -- lane start '$id' '$TARGET'" \
+  nohup bash -c "set -a; . '$ENVF'; [ -n '$JIRAF' ] && . '$JIRAF'; set +a; unset ANTHROPIC_API_KEY; npm --prefix '$ADAPT' run --silent adapt -- lane start '$id' '$TARGET'" \
     > "/tmp/adapt-lane-$id.log" 2>&1 &
   echo "lane $id: loop pid $!  (log: /tmp/adapt-lane-$id.log)"
 done

@@ -69,6 +69,18 @@ EOF
 # NOTE: run prisma directly in the db package — turbo strips DATABASE_URL from task env.
 ( cd "$WT/packages/database" && DATABASE_URL="$DBURL" pnpm db:push ) || log "WARN: db:push failed"
 
+# --- 5b) base seed: restore login accounts + demo data into a FRESH lane DB (RECOMMENDED) ---
+# Scenarios that assume pre-existing data (a known login, existing records) need a baseline; the
+# black-box runner cannot create it. Per-scenario hooks.setup ADD on top of this base. Snapshot a
+# known-good DB once, then restore it here, guarded on emptiness so re-runs never clobber live data:
+#   docker exec <db-container> pg_dump -U postgres -d postgres --data-only -t auth.users -t auth.identities  >  part1
+#   docker exec <db-container> pg_dump -U postgres -d postgres --data-only --schema=public --exclude-table=public._prisma_migrations  >  part2
+#   { echo 'SET session_replication_role=replica; BEGIN;'; cat part1 part2; echo 'COMMIT;'; } > "$TARGET/.adapt/base-seed.sql"
+# SEED="<abs path>/.adapt/base-seed.sql"; DBC="supabase_db_$PROJ"
+# if [ -f "$SEED" ] && [ "$(docker exec "$DBC" psql -U postgres -d postgres -tAc 'SELECT count(*) FROM <a-core-table>' 2>/dev/null | tr -d '[:space:]')" = "0" ]; then
+#   docker exec -i "$DBC" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -q < "$SEED" && log "base seed loaded"
+# fi
+
 # --- 6) pin web dev port + 7) point adapt config at this lane's app ---
 sed -i '' -E "s#\"dev\": \"vite --port [0-9]+\"#\"dev\": \"vite --port $WEB\"#" "$WT/apps/web/package.json"
 sed -i '' -E "s#\"appBaseUrl\": \"[^\"]*\"#\"appBaseUrl\": \"http://localhost:$WEB\"#" "$WT/.adapt/config.json"

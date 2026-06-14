@@ -14,17 +14,46 @@ function npxCommand(): string {
   return process.platform === "win32" ? "npx.cmd" : "npx";
 }
 
-function mcpServerConfig(name: string, command: string, args: string[]): string {
+function mcpServerConfig(name: string, command: string, args: string[], env: Record<string, string> = {}): string {
   return JSON.stringify({
     mcpServers: {
       [name]: {
         type: "stdio",
         command,
         args,
-        env: {},
+        env,
       },
     },
   });
+}
+
+/**
+ * Credentials for the mcp-atlassian (Jira/Confluence) server, harvested from the launcher env.
+ * Self-hosted Jira Server/DC authenticates with JIRA_URL + JIRA_PERSONAL_TOKEN (a PAT); Cloud uses
+ * JIRA_USERNAME + JIRA_API_TOKEN. We only forward keys that are actually set so an unconfigured run
+ * just yields a server that reports "no credentials" instead of leaking empty strings. The values
+ * are embedded in the --mcp-config payload so the server gets them even if Claude Code does not
+ * inherit the parent process env into stdio servers. Exported for testing.
+ */
+export function jiraMcpEnv(source: NodeJS.ProcessEnv = process.env): Record<string, string> {
+  const pick = (keys: string[]): Record<string, string> => {
+    const e: Record<string, string> = {};
+    for (const k of keys) {
+      const v = source[k];
+      if (v !== undefined && v !== "") e[k] = v;
+    }
+    return e;
+  };
+  const common = ["JIRA_URL", "JIRA_SSL_VERIFY", "JIRA_PROJECTS_FILTER", "CONFLUENCE_URL", "READ_ONLY_MODE", "ENABLED_TOOLS"];
+  const pat = ["JIRA_PERSONAL_TOKEN", "CONFLUENCE_PERSONAL_TOKEN"];
+  const basic = ["JIRA_USERNAME", "JIRA_API_TOKEN", "CONFLUENCE_USERNAME", "CONFLUENCE_API_TOKEN"];
+  const env = pick([...common, ...pat]);
+  // PAT (self-hosted Server/DC) and username/token (Cloud basic) auth are mutually exclusive. When a
+  // PAT is configured, do NOT forward basic-auth creds — this stops a stray ambient JIRA_API_TOKEN /
+  // JIRA_USERNAME (e.g. a Cloud token exported in the shell for another tool) from hijacking a local
+  // Server/DC run. With a PAT set, the resolved env is just { JIRA_URL, JIRA_PERSONAL_TOKEN, … }.
+  if (!env.JIRA_PERSONAL_TOKEN && !env.CONFLUENCE_PERSONAL_TOKEN) Object.assign(env, pick(basic));
+  return env;
 }
 
 /** Resolve adapt's logical MCP aliases into Claude Code --mcp-config payloads. */
@@ -38,7 +67,7 @@ export function resolveMcpConfig(config: string): string {
     case "chrome-devtools":
       return mcpServerConfig("chrome-devtools", npxCommand(), ["-y", "chrome-devtools-mcp@latest"]);
     case "jira":
-      return mcpServerConfig("jira", "uvx", ["mcp-atlassian"]);
+      return mcpServerConfig("jira", "uvx", ["mcp-atlassian"], jiraMcpEnv());
     default:
       return config;
   }

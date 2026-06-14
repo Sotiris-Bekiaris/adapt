@@ -28,8 +28,8 @@ export const AdaptConfigSchema = z.object({
 
   // Work tracker: Jira behind an adapter (blueprint §9–10)
   jira: z.object({
-    enabled: z.boolean().default(false),
-    baseUrl: z.string().url().optional(),
+    enabled: z.boolean().default(true),
+    baseUrl: z.string().url().default("http://localhost:8080"),
     projectKey: z.string().default(""),
     defaultIssueType: z.string().default("Bug"),
     transitions: z.object({
@@ -44,7 +44,7 @@ export const AdaptConfigSchema = z.object({
   mcp: z.object({
     playwright: z.object({ enabled: z.boolean().default(true) }).default({}),
     chromeDevTools: z.object({ enabled: z.boolean().default(true) }).default({}),
-    jira: z.object({ enabled: z.boolean().default(false) }).default({}),
+    jira: z.object({ enabled: z.boolean().default(true) }).default({}),
   }).default({}),
 
   // Safety limits (blueprint §14)

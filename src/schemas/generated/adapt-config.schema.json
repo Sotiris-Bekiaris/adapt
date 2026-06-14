@@ -9,6 +9,10 @@
       "type": "string",
       "format": "uri"
     },
+    "playwrightTestDir": {
+      "type": "string",
+      "default": "tests/adapt"
+    },
     "startCommand": {
       "type": "string"
     },
@@ -25,6 +29,10 @@
         },
         "command": {
           "type": "string"
+        },
+        "skipPermissions": {
+          "type": "boolean",
+          "default": true
         }
       },
       "additionalProperties": false,
@@ -50,6 +58,10 @@
         },
         "teardown": {
           "type": "string"
+        },
+        "requireSetupHook": {
+          "type": "boolean",
+          "default": false
         }
       },
       "additionalProperties": false,
@@ -60,11 +72,12 @@
       "properties": {
         "enabled": {
           "type": "boolean",
-          "default": false
+          "default": true
         },
         "baseUrl": {
           "type": "string",
-          "format": "uri"
+          "format": "uri",
+          "default": "http://localhost:8080"
         },
         "projectKey": {
           "type": "string",
@@ -131,7 +144,7 @@
           "properties": {
             "enabled": {
               "type": "boolean",
-              "default": false
+              "default": true
             }
           },
           "additionalProperties": false,
@@ -163,6 +176,98 @@
           "type": "integer",
           "exclusiveMinimum": 0,
           "default": 3600
+        },
+        "maxDemandsPerCycle": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 3
+        },
+        "maxScenariosPerDemand": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 2
+        },
+        "gradPassThreshold": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 3
+        }
+      },
+      "additionalProperties": false,
+      "default": {}
+    },
+    "run": {
+      "type": "object",
+      "properties": {
+        "maxCycles": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "exclusiveMinimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "maxWallClockSeconds": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "exclusiveMinimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "pauseSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 5
+        },
+        "maxConsecutiveErrors": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 3
+        }
+      },
+      "additionalProperties": false,
+      "default": {}
+    },
+    "environment": {
+      "type": "object",
+      "properties": {
+        "up": {
+          "type": "string"
+        },
+        "down": {
+          "type": "string"
+        },
+        "reset": {
+          "type": "string"
+        },
+        "portBase": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 54300
+        },
+        "portStride": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 100
+        }
+      },
+      "additionalProperties": false
+    },
+    "lanes": {
+      "type": "object",
+      "properties": {
+        "rootDir": {
+          "type": "string",
+          "default": "../adapt-lanes"
         }
       },
       "additionalProperties": false,

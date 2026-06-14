@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildClaudeArgs, ClaudeCodeEngine, resolveMcpConfig } from "../../src/engine/claudeCode.ts";
+import { buildClaudeArgs, ClaudeCodeEngine, resolveMcpConfig, jiraMcpEnv } from "../../src/engine/claudeCode.ts";
 
 // A fake "engine" that prints two NDJSON lines (one split across writes) then exits 0.
 const fakeScript = `
@@ -16,6 +16,51 @@ describe("ClaudeCodeEngine", () => {
     const parsed = JSON.parse(resolveMcpConfig("playwright"));
     expect(parsed.mcpServers.playwright.command).toMatch(/^npx(\.cmd)?$/);
     expect(parsed.mcpServers.playwright.args).toEqual(["-y", "@playwright/mcp@latest", "--isolated"]);
+  });
+
+  it("injects Jira credentials from the env into the jira MCP config (only set keys)", () => {
+    const parsed = JSON.parse(resolveMcpConfig("jira"));
+    expect(parsed.mcpServers.jira.command).toBe("uvx");
+    expect(parsed.mcpServers.jira.args).toEqual(["mcp-atlassian"]);
+    // env is whatever jiraMcpEnv harvests from the real process.env at call time (object, never null).
+    expect(typeof parsed.mcpServers.jira.env).toBe("object");
+  });
+
+  it("jiraMcpEnv forwards only set, non-empty Jira keys", () => {
+    const env = jiraMcpEnv({
+      JIRA_URL: "http://localhost:8080",
+      JIRA_PERSONAL_TOKEN: "pat123",
+      JIRA_SSL_VERIFY: "false",
+      UNRELATED: "x",                // not a known key → dropped
+    } as NodeJS.ProcessEnv);
+    expect(env).toEqual({
+      JIRA_URL: "http://localhost:8080",
+      JIRA_PERSONAL_TOKEN: "pat123",
+      JIRA_SSL_VERIFY: "false",
+    });
+  });
+
+  it("jiraMcpEnv: a PAT excludes ambient Cloud basic-auth creds (no hijack)", () => {
+    const env = jiraMcpEnv({
+      JIRA_URL: "http://localhost:8080",
+      JIRA_PERSONAL_TOKEN: "pat123",
+      JIRA_USERNAME: "stray@cloud.example",  // stray ambient cloud creds → must be dropped
+      JIRA_API_TOKEN: "ATATT-stray",
+    } as NodeJS.ProcessEnv);
+    expect(env).toEqual({ JIRA_URL: "http://localhost:8080", JIRA_PERSONAL_TOKEN: "pat123" });
+  });
+
+  it("jiraMcpEnv: Cloud basic-auth used when no PAT is set", () => {
+    const env = jiraMcpEnv({
+      JIRA_URL: "https://x.atlassian.net",
+      JIRA_USERNAME: "me@example.com",
+      JIRA_API_TOKEN: "cloud-token",
+    } as NodeJS.ProcessEnv);
+    expect(env).toEqual({
+      JIRA_URL: "https://x.atlassian.net",
+      JIRA_USERNAME: "me@example.com",
+      JIRA_API_TOKEN: "cloud-token",
+    });
   });
 
   it("builds strict MCP args from role-scoped server names", () => {
