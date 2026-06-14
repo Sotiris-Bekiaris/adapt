@@ -9,9 +9,22 @@ import type { LaneSummary } from "./laneRegistry.ts";
 const PUBLIC_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "public");
 const MIME: Record<string, string> = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css" };
 
+export type ControlAction = "start" | "stop" | "restart" | "pause" | "continue";
+
+export interface ControlCommand {
+  lane: string; // a lane id, or "*" for all lanes
+  action: ControlAction;
+  maxCycles?: number | null;
+}
+
+const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
+  "start", "stop", "restart", "pause", "continue",
+]);
+
 export interface MonitorServerDeps {
   summaries: () => LaneSummary[];
   historyFor: (laneId: string) => ConsoleEvent[];
+  control?: (cmd: ControlCommand) => void;
 }
 
 export class MonitorServer {
@@ -44,6 +57,16 @@ export class MonitorServer {
           const lane = (msg as { lane: string }).lane;
           if (socket.readyState !== socket.OPEN) return;
           socket.send(JSON.stringify({ type: "history", lane, events: this.deps.historyFor(lane) }));
+        }
+        if (
+          msg && typeof msg === "object" &&
+          (msg as { type?: unknown }).type === "control" &&
+          typeof (msg as { lane?: unknown }).lane === "string" &&
+          typeof (msg as { action?: unknown }).action === "string" &&
+          CONTROL_ACTIONS.has((msg as { action: string }).action)
+        ) {
+          const m = msg as { lane: string; action: ControlAction; maxCycles?: number | null };
+          this.deps.control?.({ lane: m.lane, action: m.action, maxCycles: m.maxCycles });
         }
       });
     });
