@@ -14,8 +14,24 @@ The methodology has a name: **Scenario-Driven Agentic Development (SDAD)**.
 
 ---
 
+## ⚠️ Read before you run this
+
+adapt is an **experimental** system that lets AI agents modify a codebase **without asking you first**. Understand these before pointing it at anything:
+
+- **Agents run with permission prompts disabled.** `engine.skipPermissions` defaults to `true`, which passes `--dangerously-skip-permissions` to Claude Code. Agents execute shell commands, edit files, and make git commits **with no approval step**. Set it to `false` to opt out.
+- **Point it at a throwaway repo or a dedicated branch — never at code you cannot afford to lose.** Lanes are git worktrees that adapt will `git reset --hard` back to a baseline. Uncommitted work in a lane worktree is destroyed.
+- **Use an isolated, disposable database.** Setup/teardown hooks reset the target's data between runs. Never aim it at a database with real or production data.
+- **It costs money and runs unattended.** Autonomous loops driving real browsers and LLM calls can run for hours. Set `run.maxCycles` and `run.maxWallClockSeconds` before starting a long run.
+- **Never expose the monitor beyond localhost.** It binds to `127.0.0.1` and has no authentication; it can start and stop agent loops.
+- **Provide credentials via gitignored env files only** (`scripts/deepseek.env`, `scripts/jira.env`, the target's `.adapt/config.json`). No secrets belong in this repo.
+
+Provided **as-is, without warranty** — see [LICENSE](./LICENSE). You are responsible for what the agents do on your machine.
+
+---
+
 ## Table of Contents
 
+- [⚠️ Read before you run this](#️-read-before-you-run-this)
 - [What adapt is](#what-adapt-is)
 - [What "self-improving" means (and does not)](#what-self-improving-means-and-does-not)
 - [Core principles — the constitution](#core-principles--the-constitution)
@@ -32,6 +48,7 @@ The methodology has a name: **Scenario-Driven Agentic Development (SDAD)**.
 - [Configuration reference](#configuration-reference)
 - [Safeguards — the hard rules](#safeguards--the-hard-rules)
 - [Status & honest limitations](#status--honest-limitations)
+- [License](#license)
 
 ---
 
@@ -361,3 +378,11 @@ This is a research experiment, and its risks are real.
 1. **Spine** — `validate → triage → repair → verify`.
 2. **Demand engine** — Dreamer + Critic + Generator.
 3. **Endurance & graduation** — long runs, a regression pool, graduating stable scenarios into deterministic tests, and budget guardrails.
+
+---
+
+## License
+
+[MIT](./LICENSE) © Sotiris Bekiaris.
+
+Provided as-is, without warranty of any kind. See [Read before you run this](#️-read-before-you-run-this) for the operational risks of running autonomous agents against a codebase.

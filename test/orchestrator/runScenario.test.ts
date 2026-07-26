@@ -104,7 +104,7 @@ describe("runScenario", () => {
     const rec = await runScenario({ ...d, config, targetRepo: d.dir, sink: () => {} }, scenario());
     expect(rec.status).toBe("blocked");
     expect(invoked).toBe(false);
-    expect(rec.runnerNotes.toLowerCase()).toContain("no setup hook");
+    expect(rec.runnerNotes?.toLowerCase()).toContain("no setup hook");
   });
 
   it("warns but still runs when no setup hook resolves and requireSetupHook is off (default)", async () => {

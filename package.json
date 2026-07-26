@@ -1,6 +1,24 @@
 {
   "name": "adapt",
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "Scenario-Driven Agentic Development — a closed-loop multi-agent system that autonomously evolves a software product.",
+  "license": "MIT",
+  "author": "Sotiris Bekiaris",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sotiris-Bekiaris/adapt.git"
+  },
+  "homepage": "https://github.com/Sotiris-Bekiaris/adapt#readme",
+  "bugs": {
+    "url": "https://github.com/Sotiris-Bekiaris/adapt/issues"
+  },
+  "keywords": [
+    "agents",
+    "autonomous",
+    "claude-code",
+    "playwright",
+    "sdad"
+  ],
   "private": true,
   "type": "module",
   "bin": {
