@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { mkdtempSync, writeFileSync, mkdirSync, existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { startLaneLoop, laneLoopStatus } from "../../src/lanes/loop.ts";
+import { startLaneLoop, laneLoopStatus, detachedRunArgs } from "../../src/lanes/loop.ts";
 
 function makeWorktree(): string {
   const wt = mkdtempSync(join(tmpdir(), "lane-loop-"));
@@ -20,6 +20,18 @@ function makeWorktree(): string {
   writeFileSync(join(wt, ".adapt", "lane.json"), JSON.stringify(manifest), "utf8");
   return wt;
 }
+
+describe("detachedRunArgs", () => {
+  it("passes the lane's console port so a detached loop streams instead of only being replayable", () => {
+    expect(detachedRunArgs("/adapt/src/cli/index.ts", "/lanes/a", 4400)).toEqual([
+      "/adapt/src/cli/index.ts",
+      "run",
+      "/lanes/a",
+      "--console",
+      "4400",
+    ]);
+  });
+});
 
 describe("startLaneLoop foreground", () => {
   it("records a pidfile while running so the lane reads as running, then removes it", async () => {

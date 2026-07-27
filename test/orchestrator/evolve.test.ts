@@ -37,7 +37,7 @@ function organismEngine() {
     } else if (s.role === "runner") {
       const path = s.prompt.match(/RESULT_FILE=(.+)/)![1]!.trim();
       const sid = s.prompt.match(/SCENARIO (SCN-\d+)/)![1];
-      writeFileSync(path, JSON.stringify({ runId: "x", scenarioId: sid, scenarioTitle: sid, status: "passed", startedAt: "t", finishedAt: "t", appBaseUrl: "http://x", appVersion: null, environment: "local", stepsExecuted: 1, failureStep: null, expectedOutcome: "x", actualOutcome: "x", consoleErrors: [], networkErrors: [], screenshots: [], artifacts: [], linkedJiraIssue: null, runnerNotes: "" }));
+      writeFileSync(path, JSON.stringify({ runId: "x", scenarioId: sid, scenarioTitle: sid, status: "passed", startedAt: "t", finishedAt: "t", appBaseUrl: "http://x", appVersion: null, environment: "local", stepsExecuted: 1, failureStep: null, expectedOutcome: "x", actualOutcome: "x", consoleErrors: [], networkErrors: [], screenshots: [], artifacts: [], runnerNotes: "" }));
     }
     return [{ kind: "agent.exit", role: s.role, at: "t", exitCode: 0 }];
   }});

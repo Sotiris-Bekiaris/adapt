@@ -5,7 +5,7 @@ const record = {
   runId: "RUN-1", scenarioId: "SCN-001", scenarioTitle: "Login works", status: "failed", startedAt: "t", finishedAt: "t",
   appBaseUrl: "http://x", appVersion: null, environment: "local", stepsExecuted: 3, failureStep: 2,
   expectedOutcome: "home page", actualOutcome: "error toast", consoleErrors: ["TypeError"], networkErrors: [],
-  screenshots: [], artifacts: [], linkedJiraIssue: null, runnerNotes: "",
+  screenshots: [], artifacts: [], runnerNotes: "",
 } as any;
 
 describe("triage", () => {
@@ -22,8 +22,10 @@ describe("triage", () => {
     expect(p.toLowerCase()).toContain("jira");
     expect(p).toContain("ADAPT");
   });
-  it("prompt omits Jira creation when disabled", () => {
+  it("prompt omits Jira creation when disabled and points at the local tracker", () => {
     const p = triagePrompt({ record, resultPath: "/x.json", jiraEnabled: false, projectKey: "" });
     expect(p).toContain("jiraKey: null");
+    expect(p).toContain("local tracker");
+    expect(p).not.toContain("create a Jira issue in project");
   });
 });

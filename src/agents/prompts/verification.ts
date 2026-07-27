@@ -9,7 +9,6 @@ export const VerificationResultSchema = z.object({
   failureStep: z.number().int().nullable().default(null),
   actualOutcome: z.string().nullable().default(null),
   notes: z.string().default(""),
-  jiraMovedTo: z.string().nullable().default(null),
 });
 export type VerificationResult = z.infer<typeof VerificationResultSchema>;
 
@@ -24,8 +23,8 @@ export interface VerificationPromptCtx {
 export function verificationPrompt(ctx: VerificationPromptCtx): string {
   const { item, scenario, appBaseUrl, resultPath, jiraEnabled } = ctx;
   const jira = jiraEnabled && item.jiraKey
-    ? `If verified, move Jira issue ${item.jiraKey} to "Done" via the Jira MCP. If still failing, move it back to "In Progress". Report the status you set in "jiraMovedTo".`
-    : `Jira is not in play; set jiraMovedTo: null.`;
+    ? `If verified, move Jira issue ${item.jiraKey} to "Done" via the Jira MCP. If still failing, move it back to "In Progress".`
+    : `Jira is not in play; skip Jira updates.`;
   return `You are an INDEPENDENT verifier. A fix was just attempted for the work item below. Your job is to confirm,
 black-box, whether the original user scenario now succeeds. Behave exactly like the user. Do NOT read the source code
 or the fix diff — interact only through the browser (Playwright MCP) against the running app at ${appBaseUrl}.
@@ -44,5 +43,5 @@ ${jira}
 
 Write your result as a single JSON object to this exact path:
 RESULT_FILE=${resultPath}
-Shape: { "verified": true|false, "status": "passed|failed|...", "failureStep": <int|null>, "actualOutcome": "<text>|null", "notes": "<text>", "jiraMovedTo": "<status>"|null }`;
+Shape: { "verified": true|false, "status": "passed|failed|...", "failureStep": <int|null>, "actualOutcome": "<text>|null", "notes": "<text>" }`;
 }

@@ -36,6 +36,6 @@ The JSON must conform to the RunRecord schema:
   "appVersion": null, "environment": "local", "stepsExecuted": <int>, "failureStep": <int|null>,
   "expectedOutcome": "<text>", "actualOutcome": "<text>",
   "consoleErrors": [], "networkErrors": [], "screenshots": [], "artifacts": [],
-  "linkedJiraIssue": null, "runnerNotes": "<short notes>" }
+  "runnerNotes": "<short notes>" }
 Write the file before you finish. Do not guess a pass.`;
 }

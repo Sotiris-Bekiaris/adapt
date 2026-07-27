@@ -1,0 +1,26 @@
+# Blank issues are off, so every link here has to resolve on a freshly published repo.
+# GitHub Discussions is disabled by default on a new repository: linking to /discussions
+# would 404 for anyone who clicked it. Questions therefore go to the issue tracker with a
+# `question` label. Once Discussions is enabled in repo settings, switch the first link
+# back to https://github.com/Sotiris-Bekiaris/adapt/discussions.
+blank_issues_enabled: false
+
+contact_links:
+  - name: Question about how adapt works
+    url: https://github.com/Sotiris-Bekiaris/adapt/issues/new?labels=question&title=Question%3A%20
+    about: >
+      Usage questions, "is this supposed to work like this?", and design conversation.
+      Opens an issue labelled `question`. adapt is an experimental personal research project —
+      answers are best effort.
+
+  - name: Search existing issues first
+    url: https://github.com/Sotiris-Bekiaris/adapt/issues?q=is%3Aissue
+    about: >
+      Open and closed issues, including ones already answered. Closed issues are often the
+      fastest answer, since there is no release channel and no changelog entry per fix.
+
+  - name: Report a security vulnerability
+    url: https://github.com/Sotiris-Bekiaris/adapt/security/advisories/new
+    about: >
+      Private disclosure. Do not open a public issue for anything exploitable.
+      See SECURITY.md for the threat model and what is in scope.

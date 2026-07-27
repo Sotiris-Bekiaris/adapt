@@ -11,6 +11,20 @@ scenario-runs/
 verification-reports/
 decision-log/
 work-items/
+demands/
+baselines/
+
+# a whole adapt workspace, in case this repo is ever pointed at itself (`adapt init .`)
+.adapt/
+# lane worktrees: lanes.rootDir defaults to "../adapt-lanes", i.e. a sibling of the
+# target repo — outside this tree — but ignore the in-tree case too.
+adapt-lanes/
+
+# orchestrator state store (better-sqlite3, WAL mode) and loop bookkeeping
+*.db
+*.db-wal
+*.db-shm
+*.pid
 
 # dependencies / build
 node_modules/
@@ -21,7 +35,17 @@ __pycache__/
 
 # OS / editor
 .DS_Store
+Thumbs.db
 *.log
+*.swp
+.idea/
+.vscode/
+
+# tooling caches / reports
+*.tsbuildinfo
+coverage/
+.vitest/
+.impeccable/
 
 opencode.json
 

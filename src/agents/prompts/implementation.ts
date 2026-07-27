@@ -6,7 +6,6 @@ export const ImplResultSchema = z.object({
   branch: z.string().min(1),
   summary: z.string(),
   testsPassed: z.boolean(),
-  jiraMovedTo: z.string().nullable().default(null),
 });
 export type ImplResult = z.infer<typeof ImplResultSchema>;
 
@@ -47,5 +46,5 @@ Hard rules:
 
 Write your result as a single JSON object to this exact path:
 RESULT_FILE=${resultPath}
-Shape: { "branch": "${branch}", "summary": "<what you changed>", "testsPassed": true|false, "jiraMovedTo": "<status>"|null }`;
+Shape: { "branch": "${branch}", "summary": "<what you changed>", "testsPassed": true|false }`;
 }

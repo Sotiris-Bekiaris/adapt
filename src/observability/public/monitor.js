@@ -5,7 +5,7 @@ const lanesEl = document.getElementById("lanes");
 const focusHeaderEl = document.getElementById("focus-header");
 const agentsEl = document.getElementById("agents");
 const timelineEl = document.getElementById("timeline-list");
-const focusMainQuery = () => document.querySelector(".focus-body");
+const focusBody = () => document.querySelector(".focus-body");
 const cyclesEl = document.getElementById("cycles");
 const toggleEl = document.getElementById("view-toggle");
 const globalControlsEl = document.getElementById("global-controls");
@@ -16,6 +16,8 @@ const BUFFER_CAP = 500;
 let ws = null;
 let focusedLane = null;
 let lanes = []; // latest [{ laneId, model, baseline, status, cycle }]
+let gotLanes = false; // has the server sent a lanes list yet? (empty vs loading)
+let connected = false; // socket state, so "empty" is never confused with "offline"
 const buffers = new Map(); // laneId -> event[]
 let columns = new Map(); // role -> events container (for focused lane)
 let viewMode = "cycles"; // "stream" | "cycles"
@@ -25,6 +27,15 @@ const seenCycleKeys = new Set(); // cycles whose default-open has been applied
 
 function laneMeta(laneId) {
   return lanes.find((l) => l.laneId === laneId) || null;
+}
+
+// A blank pane is indistinguishable from a broken one, so every empty region
+// says what it is waiting for and which command produces it.
+function emptyNode(text) {
+  const p = document.createElement("p");
+  p.className = "empty";
+  p.textContent = text;
+  return p;
 }
 
 // --- lane controls ---
@@ -66,6 +77,8 @@ function column(role) {
 // Build nodes with textContent only — event fields (kind/role/tool/text) are
 // untrusted, so never interpolate them into innerHTML.
 function render(e) {
+  const stale = agentsEl.querySelector(":scope > .empty");
+  if (stale) stale.remove();
   const events = column(e.role);
   const div = document.createElement("div");
   div.className = "ev " + e.kind;
@@ -99,6 +112,13 @@ function clearPane() {
   agentsEl.replaceChildren();
   timelineEl.replaceChildren();
   columns = new Map();
+  agentsEl.append(
+    emptyNode(
+      focusedLane
+        ? "no events for this lane yet — start it with the ▶ button, or `adapt lane start <laneId> <targetRepo>`."
+        : "select a lane on the left to stream its agents.",
+    ),
+  );
 }
 
 // --- cycles view ---
@@ -137,8 +157,15 @@ function renderStep(c, s) {
   const row = document.createElement("div");
   row.className = "step " + s.status;
 
-  const head = document.createElement("div");
+  const key = stepKey(c, s);
+  const open = expanded.has(key);
+
+  // A real <button>: focusable, Enter/Space operable, and it advertises its
+  // disclosure state. It contains no nested interactive elements, so this is safe.
+  const head = document.createElement("button");
+  head.type = "button";
   head.className = "step-h";
+  head.setAttribute("aria-expanded", String(open));
   const idx = document.createElement("span");
   idx.className = "step-idx";
   idx.textContent = "#" + s.index;
@@ -153,7 +180,6 @@ function renderStep(c, s) {
   sum.textContent = s.summary;
   head.append(idx, role, status, sum);
 
-  const key = stepKey(c, s);
   head.addEventListener("click", () => {
     if (expanded.has(key)) expanded.delete(key);
     else expanded.add(key);
@@ -161,7 +187,7 @@ function renderStep(c, s) {
   });
   row.append(head);
 
-  if (expanded.has(key)) {
+  if (open) {
     const detail = document.createElement("div");
     detail.className = "step-detail";
     const prev = s.index > 1 ? c.steps[s.index - 2] : null;
@@ -180,10 +206,13 @@ function renderCycle(c, isNewest) {
   wrap.className = "cycle " + c.status;
   const open = isCycleOpen(c, isNewest);
 
-  const header = document.createElement("div");
+  const header = document.createElement("button");
+  header.type = "button";
   header.className = "cycle-h";
+  header.setAttribute("aria-expanded", String(open));
   const caret = document.createElement("span");
   caret.className = "caret";
+  caret.setAttribute("aria-hidden", "true");
   caret.textContent = open ? "▼" : "▶";
   const title = document.createElement("span");
   title.className = "cycle-title";
@@ -223,8 +252,20 @@ function renderCycles() {
     saved.set(el.dataset.scrollkey, { top: el.scrollTop, height: el.style.height });
   }
   cyclesEl.replaceChildren();
-  if (!focusedLane) return;
+  if (!focusedLane) {
+    cyclesEl.append(emptyNode("select a lane on the left to see its cycles."));
+    return;
+  }
   const cycles = buildCycles(laneEvents.get(focusedLane) || []);
+  if (cycles.length === 0) {
+    cyclesEl.append(
+      emptyNode(
+        "this lane has no recorded events yet.\n" +
+          "Start it with the ▶ button above, or `adapt lane start <laneId> <targetRepo>`.",
+      ),
+    );
+    return;
+  }
   for (let i = cycles.length - 1; i >= 0; i--) {
     cyclesEl.append(renderCycle(cycles[i], i === cycles.length - 1));
   }
@@ -240,9 +281,11 @@ function renderCycles() {
 function setView(mode) {
   viewMode = mode;
   for (const b of toggleEl.querySelectorAll("button")) {
-    b.classList.toggle("active", b.dataset.view === mode);
+    const active = b.dataset.view === mode;
+    b.classList.toggle("active", active);
+    b.setAttribute("aria-pressed", String(active));
   }
-  const body = focusMainQuery();
+  const body = focusBody();
   if (body) body.classList.toggle("cycles-mode", mode === "cycles");
   if (mode === "cycles") renderCycles();
 }
@@ -284,21 +327,44 @@ function renderSidebar() {
   h.textContent = "lanes";
   lanesEl.append(h);
 
+  if (lanes.length === 0) {
+    let msg;
+    if (gotLanes) {
+      msg =
+        "no lanes yet.\nCreate one:\n" +
+        "  adapt baseline create v1 <targetRepo>\n" +
+        "  adapt lane create a <targetRepo> --baseline v1\n" +
+        "  adapt lane start a <targetRepo>";
+    } else if (connected) {
+      msg = "waiting for the lane list…";
+    } else {
+      msg = "not connected to the monitor — retrying.";
+    }
+    lanesEl.append(emptyNode(msg));
+    return;
+  }
+
   for (const lane of lanes) {
     const running = lane.status === "running";
     const row = document.createElement("div");
     row.className = "lane " + (running ? "running" : "stopped") + (lane.paused ? " paused" : "");
     if (lane.laneId === focusedLane) row.classList.add("active");
 
-    const top = document.createElement("div");
-    top.className = "lane-top";
+    // The selectable target is a button, not the row: the row also holds the
+    // control buttons and the maxCycles input, which may not nest in a button.
+    const top = document.createElement("button");
+    top.type = "button";
+    top.className = "lane-select";
+    if (lane.laneId === focusedLane) top.setAttribute("aria-current", "true");
     const dot = document.createElement("span");
     dot.className = "dot";
+    dot.setAttribute("aria-hidden", "true");
     dot.textContent = running ? "●" : "○";
     const id = document.createElement("span");
     id.className = "lane-id";
     id.textContent = lane.laneId;
     top.append(dot, id);
+    top.addEventListener("click", () => focusLane(lane.laneId));
 
     const meta = document.createElement("div");
     meta.className = "lane-meta";
@@ -322,31 +388,31 @@ function renderSidebar() {
     maxInput.min = "0";
     maxInput.placeholder = "∞";
     maxInput.title = "maxCycles (blank=∞)";
+    maxInput.setAttribute("aria-label", `maxCycles for lane ${lane.laneId} (blank = infinite)`);
     if (lane.maxCycles != null) maxInput.value = String(lane.maxCycles);
-    maxInput.addEventListener("click", (ev) => ev.stopPropagation());
 
-    const mkBtn = (label, action, enabled) => {
+    // Glyph-only buttons need an accessible name; the visible glyph is decorative.
+    const mkBtn = (label, name, action, enabled) => {
       const b = document.createElement("button");
+      b.type = "button";
       b.textContent = label;
+      b.title = `${name} lane ${lane.laneId}`;
+      b.setAttribute("aria-label", `${name} lane ${lane.laneId}`);
       b.disabled = !enabled;
-      b.addEventListener("click", (ev) => {
-        ev.stopPropagation();
-        sendControl(lane.laneId, action, maxInput);
-      });
+      b.addEventListener("click", () => sendControl(lane.laneId, action, maxInput));
       return b;
     };
 
     controls.append(
-      mkBtn("▶", "start", !running),
-      mkBtn("⏸", "pause", running && !paused),
-      mkBtn("▶▶", "continue", running && paused),
-      mkBtn("⟳", "restart", running),
-      mkBtn("■", "stop", running),
+      mkBtn("▶", "start", "start", !running),
+      mkBtn("⏸", "pause", "pause", running && !paused),
+      mkBtn("▶▶", "continue", "continue", running && paused),
+      mkBtn("⟳", "restart", "restart", running),
+      mkBtn("■", "stop", "stop", running),
       maxInput,
     );
     row.append(controls);
 
-    row.addEventListener("click", () => focusLane(lane.laneId));
     lanesEl.append(row);
   }
 }
@@ -369,6 +435,10 @@ function focusLane(laneId) {
     if (buf) for (const e of buf) render(e);
   }
   // ask server for what it has (full history; drives the cycles view)
+  requestHistory(laneId);
+}
+
+function requestHistory(laneId) {
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({ type: "focus", lane: laneId }));
   }
@@ -398,6 +468,7 @@ function appendLaneEvent(laneId, event) {
 function handleMessage(msg) {
   if (msg.type === "lanes") {
     lanes = Array.isArray(msg.lanes) ? msg.lanes : [];
+    gotLanes = true;
     // auto-focus first running lane (or first lane) if nothing focused yet
     if (focusedLane === null && lanes.length > 0) {
       const first = lanes.find((l) => l.status === "running") || lanes[0];
@@ -410,6 +481,7 @@ function handleMessage(msg) {
     if (focusedLane !== null && !laneMeta(focusedLane)) {
       focusedLane = null;
       clearPane();
+      if (viewMode === "cycles") renderCycles();
     }
     renderSidebar();
     renderFocusHeader();
@@ -427,11 +499,14 @@ function handleMessage(msg) {
   }
 
   if (msg.type === "history") {
-    // History is the authoritative full log on arrival; replace whatever live
-    // events accumulated for this lane. A live event racing in just before this
-    // reply is self-healing — the next live event triggers a fresh buildCycles.
+    // History is the authoritative full log on arrival, and it already contains
+    // everything the live buffer replayed — so the stream pane is rebuilt from
+    // it rather than appended to, otherwise every focus (and every reconnect)
+    // renders each event twice. A live event racing in just before this reply is
+    // self-healing: the next live event triggers a fresh buildCycles.
     if (Array.isArray(msg.events)) laneEvents.set(msg.lane, msg.events.slice());
     if (msg.lane === focusedLane) {
+      clearPane();
       for (const e of msg.events || []) render(e);
       if (viewMode === "cycles") renderCycles();
     }
@@ -441,21 +516,47 @@ function handleMessage(msg) {
 
 // --- connection ---
 
+const RETRY_MIN_MS = 1000;
+const RETRY_MAX_MS = 10000;
+let retryDelay = RETRY_MIN_MS;
+
 function connect() {
-  ws = new WebSocket(`ws://${location.host}/ws`);
+  // wss when the page itself is served over TLS, so the monitor survives being
+  // put behind a reverse proxy.
+  const scheme = location.protocol === "https:" ? "wss:" : "ws:";
+  ws = new WebSocket(`${scheme}//${location.host}/ws`);
+
   ws.onopen = () => {
+    connected = true;
     statusEl.textContent = "connected";
     statusEl.className = "connected";
+    retryDelay = RETRY_MIN_MS;
+    if (lanes.length === 0) renderSidebar();
+    // Events emitted while the socket was down were never delivered. Re-request
+    // the focused lane's history so the log has no silent hole; the `history`
+    // branch replaces the lane's events wholesale, which repairs the gap.
+    if (focusedLane) requestHistory(focusedLane);
   };
+
   ws.onclose = () => {
-    statusEl.textContent = "disconnected · retrying";
+    connected = false;
+    statusEl.textContent = `disconnected · retrying in ${Math.round(retryDelay / 1000)}s`;
     statusEl.className = "disconnected";
-    setTimeout(connect, 1000);
+    if (lanes.length === 0) renderSidebar();
+    setTimeout(connect, retryDelay);
+    retryDelay = Math.min(Math.round(retryDelay * 1.5), RETRY_MAX_MS);
   };
+
   ws.onmessage = (msg) => {
     try {
       handleMessage(JSON.parse(msg.data));
     } catch {}
   };
 }
+
+// Paint the empty state immediately so the first frame explains itself, and
+// apply the default view so the markup matches the pre-selected toggle button.
+renderSidebar();
+clearPane();
+setView(viewMode);
 connect();

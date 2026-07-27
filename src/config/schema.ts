@@ -11,7 +11,9 @@ export const AdaptConfigSchema = z.object({
   engine: z.object({
     type: z.enum(["claude-code", "stub"]).default("claude-code"),
     command: z.string().optional(), // override binary/path; defaults set by the engine adapter (Plan 3)
-    skipPermissions: z.boolean().default(true), // pass --dangerously-skip-permissions to Claude Code
+    // Pass --dangerously-skip-permissions to Claude Code. Read by every command that builds an
+    // engine (src/cli/commands/engineFor.ts); set it to false to make agents ask for permission.
+    skipPermissions: z.boolean().default(true),
   }).default({}),
 
   // Live console (blueprint §11)
@@ -26,25 +28,27 @@ export const AdaptConfigSchema = z.object({
     requireSetupHook: z.boolean().default(false),
   }).default({}),
 
-  // Work tracker: Jira behind an adapter (blueprint §9–10)
+  // Work tracker: Jira behind an adapter (blueprint §9–10). Opt-in: out of the box adapt uses its
+  // built-in local tracker (src/tracker/localTracker.ts), which needs no external service. Turning
+  // it on requires a reachable Jira Server/DC or Cloud instance and the mcp-atlassian MCP server.
+  //
+  // Only projectKey lives here. The connection itself (URL + credentials) comes from the JIRA_*
+  // environment variables that adapt forwards into mcp-atlassian (src/engine/claudeCode.ts), and
+  // the on/off switch is mcp.jira.enabled below. Issue type and workflow transition names are not
+  // configurable: they are literals in the agent prompts (src/agents/prompts/{triage,
+  // implementation,verification}.ts). Keys nothing reads do not belong in a schema.
   jira: z.object({
-    enabled: z.boolean().default(true),
-    baseUrl: z.string().url().default("http://localhost:8080"),
-    projectKey: z.string().default(""),
-    defaultIssueType: z.string().default("Bug"),
-    transitions: z.object({
-      inReview: z.string().default("In Review"),
-      readyForVerification: z.string().default("Ready for Verification"),
-      done: z.string().default("Done"),
-      reopened: z.string().default("In Progress"),
-    }).default({}),
+    projectKey: z.string().default(""), // Jira project agents file issues in, e.g. "ADAPT"
   }).default({}),
 
   // MCP servers exposed per role (blueprint §9)
   mcp: z.object({
     playwright: z.object({ enabled: z.boolean().default(true) }).default({}),
     chromeDevTools: z.object({ enabled: z.boolean().default(true) }).default({}),
-    jira: z.object({ enabled: z.boolean().default(true) }).default({}),
+    // Off by default: adapt's local tracker needs no external service. This is the single gate on
+    // attaching the jira MCP server to a role (src/engine/mcp.ts) and on the Jira instructions in
+    // the agent prompts (src/orchestrator/{triage,repair}.ts).
+    jira: z.object({ enabled: z.boolean().default(false) }).default({}),
   }).default({}),
 
   // Safety limits (blueprint §14)

@@ -21,7 +21,8 @@ describe("verification", () => {
   it("VerificationResultSchema validates and defaults", () => {
     const r = VerificationResultSchema.parse({ verified: true, status: "passed" });
     expect(r.failureStep).toBeNull();
-    expect(r.jiraMovedTo).toBeNull();
+    // adapt cannot verify a Jira transition, so the agent is not asked to report one back.
+    expect(Object.keys(r)).not.toContain("jiraMovedTo");
   });
   it("prompt is black-box, names the scenario + app URL + RESULT_FILE, and the independence rule", () => {
     const p = verificationPrompt({ item, scenario, appBaseUrl: "http://localhost:3000", resultPath: "/r/.adapt/work-items/verify-ITEM-001.json", jiraEnabled: true });

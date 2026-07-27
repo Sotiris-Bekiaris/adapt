@@ -37,7 +37,7 @@ function writeResult(spec: any, payload: unknown) {
 
 describe("implementWorkItem", () => {
   it("records a fix attempt and moves the item to ready-for-verification", async () => {
-    const engine = new StubEngine({ script: (s) => { writeResult(s, { branch: "adapt/ITEM-001", summary: "fix", testsPassed: true, jiraMovedTo: null }); return [{ kind: "agent.exit", role: s.role, at: "t", exitCode: 0 }]; } });
+    const engine = new StubEngine({ script: (s) => { writeResult(s, { branch: "adapt/ITEM-001", summary: "fix", testsPassed: true }); return [{ kind: "agent.exit", role: s.role, at: "t", exitCode: 0 }]; } });
     const d = deps(engine);
     const tracker = new LocalTracker(d.targetRepo);
     tracker.create(item("triaged"));
@@ -50,7 +50,7 @@ describe("implementWorkItem", () => {
 
 describe("verifyWorkItem", () => {
   it("verified -> item done + scenario regression", async () => {
-    const engine = new StubEngine({ script: (s) => { writeResult(s, { verified: true, status: "passed", failureStep: null, actualOutcome: null, notes: "", jiraMovedTo: null }); return [{ kind: "agent.exit", role: s.role, at: "t", exitCode: 0 }]; } });
+    const engine = new StubEngine({ script: (s) => { writeResult(s, { verified: true, status: "passed", failureStep: null, actualOutcome: null, notes: "" }); return [{ kind: "agent.exit", role: s.role, at: "t", exitCode: 0 }]; } });
     const d = deps(engine);
     const tracker = new LocalTracker(d.targetRepo);
     tracker.create(item("ready-for-verification"));
@@ -61,7 +61,7 @@ describe("verifyWorkItem", () => {
   });
 
   it("still failing -> item reopened", async () => {
-    const engine = new StubEngine({ script: (s) => { writeResult(s, { verified: false, status: "failed", failureStep: 2, actualOutcome: "still broken", notes: "", jiraMovedTo: null }); return [{ kind: "agent.exit", role: s.role, at: "t", exitCode: 0 }]; } });
+    const engine = new StubEngine({ script: (s) => { writeResult(s, { verified: false, status: "failed", failureStep: 2, actualOutcome: "still broken", notes: "" }); return [{ kind: "agent.exit", role: s.role, at: "t", exitCode: 0 }]; } });
     const d = deps(engine);
     const tracker = new LocalTracker(d.targetRepo);
     tracker.create(item("ready-for-verification"));
@@ -71,7 +71,7 @@ describe("verifyWorkItem", () => {
   });
 
   it("parks in needs-attention when verification attempts are exhausted", async () => {
-    const engine = new StubEngine({ script: (s) => { writeResult(s, { verified: false, status: "failed", failureStep: 1, actualOutcome: "x", notes: "", jiraMovedTo: null }); return [{ kind: "agent.exit", role: s.role, at: "t", exitCode: 0 }]; } });
+    const engine = new StubEngine({ script: (s) => { writeResult(s, { verified: false, status: "failed", failureStep: 1, actualOutcome: "x", notes: "" }); return [{ kind: "agent.exit", role: s.role, at: "t", exitCode: 0 }]; } });
     const d = deps(engine, { maxVerificationAttempts: 1 });
     const tracker = new LocalTracker(d.targetRepo);
     tracker.create(item("ready-for-verification"));

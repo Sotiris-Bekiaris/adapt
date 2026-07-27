@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>adapt — Agent Development for Autonomous ProducTs</title>
 <meta name="description" content="adapt: a closed loop of coding agents that autonomously evolves a software product — scenario-driven, self-verifying, observed from a live mission-control console." />
+<!-- Secondary surface. README.md in the repo root is canonical; this page is a
+     visual rendering of it and is refreshed by hand. If the two disagree,
+     README.md wins. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='%23b8ff35'/%3E%3C/svg%3E" />
+<!-- Webfonts load from Google Fonts, so opening this file offline (or from a
+     clone with no network) sends nothing and renders immediately in the declared
+     fallbacks: Georgia for the display face, the system mono stack for the rest.
+     &display=swap keeps text visible while the request is in flight. -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..700&family=JetBrains+Mono:ital,wght@0,400..700;1,400..600&display=swap" rel="stylesheet" />
@@ -17,11 +25,15 @@
     --line-2: #2a3849;
     --text: #cdd8e4;
     --muted: #75869a;
-    --faint: #4a586a;
+    /* #4a586a was 2.70:1 on --ink — below the WCAG AA floor for the small
+       labels and inline code-tree comments that use it. #6f8296 keeps the same
+       hue and recessed role, clearing 4.5:1 on every surface here (4.55 on the
+       lightest panel, 4.95 on the page background). */
+    --faint: #6f8296;
     --accent: #b8ff35;      /* bioluminescent lime — "alive / active" */
     --accent-dim: #7ea827;
     --amber: #ffb454;       /* secondary — pending / caution */
-    --mauve: #cBaCff;
+    --mauve: #cbacff;
     --cyan: #6fe0d0;
     --display: "Fraunces", Georgia, serif;
     --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -76,6 +88,9 @@
 
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  /* The nav links are low-contrast until hover, so the UA focus ring is close to
+     invisible on this background. Make keyboard position unmistakable. */
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
 
   .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
 
@@ -153,7 +168,7 @@
   .principle-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-top: 36px; }
   @media (max-width: 680px){ .principle-grid { grid-template-columns: 1fr; } }
   .principle { background: var(--ink-2); padding: 20px 22px; }
-  .principle h4 { margin: 0 0 6px; font-family: var(--mono); font-size: 13px; letter-spacing: .03em; color: var(--accent); font-weight: 600; }
+  .principle h3 { margin: 0 0 6px; font-family: var(--mono); font-size: 13px; letter-spacing: .03em; color: var(--accent); font-weight: 600; }
   .principle p { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.6; }
 
   /* ---------- the loop ---------- */
@@ -166,7 +181,7 @@
   }
   .node:hover { transform: translateY(-3px); border-color: rgba(184,255,53,.4); background: var(--panel); }
   .node .role { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
-  .node h4 { margin: 8px 0 6px; font-family: var(--display); font-size: 19px; font-weight: 600; color: var(--text); }
+  .node h3 { margin: 8px 0 6px; font-family: var(--display); font-size: 19px; font-weight: 600; color: var(--text); }
   .node p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.55; }
   .node .perm { margin-top: 10px; font-size: 10.5px; letter-spacing: .05em; color: var(--accent-dim); }
   .node.future { border-style: dashed; opacity: .82; }
@@ -219,7 +234,7 @@
   .phase.next .ph-id { color: var(--amber); } .phase.next .ph-state { color: var(--amber); }
   .phase.todo .ph-id { color: var(--faint); } .phase.todo .ph-state { color: var(--faint); }
   .phase .body { padding: 20px 22px; }
-  .phase .body h4 { margin: 0 0 6px; font-family: var(--display); font-size: 20px; font-weight: 600; color: var(--text); }
+  .phase .body h3 { margin: 0 0 6px; font-family: var(--display); font-size: 20px; font-weight: 600; color: var(--text); }
   .phase .body p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.6; }
   @media (max-width: 560px){ .phase { grid-template-columns: 84px 1fr; } .phase .ph-id { font-size: 24px; } }
 
@@ -228,7 +243,7 @@
   .entry { position: relative; padding: 0 0 26px 28px; }
   .entry::before { content:""; position: absolute; left: -5px; top: 5px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px rgba(184,255,53,.6); }
   .entry .date { font-size: 11.5px; letter-spacing: .14em; color: var(--accent-dim); text-transform: uppercase; }
-  .entry h4 { margin: 4px 0 6px; font-family: var(--display); font-size: 19px; font-weight: 600; color: var(--text); }
+  .entry h3 { margin: 4px 0 6px; font-family: var(--display); font-size: 19px; font-weight: 600; color: var(--text); }
   .entry p { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.6; }
   .entry code { background: var(--ink-2); border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; font-size: 12px; color: var(--cyan); }
 
@@ -291,8 +306,8 @@
       No human in the loop. You just watch the organism think.
     </p>
     <div class="chips">
-      <span class="chip ok"><span class="dot"></span>Phase 3 — endurance &amp; graduation — complete</span>
-      <span class="chip">184 tests green</span>
+      <span class="chip ok"><span class="dot"></span>every phase implemented &amp; stub-tested</span>
+      <span class="chip">suite green — <code>npm test</code></span>
       <span class="chip">Node · TypeScript</span>
       <span class="chip">plug into any full-stack app</span>
     </div>
@@ -310,12 +325,12 @@
         static; the <em>product</em> improves.
       </p>
       <div class="principle-grid">
-        <div class="principle"><h4>scenario = contract</h4><p>Truth is a real user goal with a visible success condition — not the code, not the agent's memory, not the current UI.</p></div>
-        <div class="principle"><h4>reality is the judge</h4><p>A change is "done" only when an <em>independent</em> agent confirms the scenario passes in a real browser. No self-approval.</p></div>
-        <div class="principle"><h4>git is the safety net</h4><p>Every change is a commit on a branch in the target repo. The organism can't destroy work; its whole evolution is replayable.</p></div>
-        <div class="principle"><h4>separation of powers</h4><p>Generator may read code; the runner may not; the fixer must; the verifier is independent of the fixer. The loop can't rubber-stamp itself.</p></div>
-        <div class="principle"><h4>durable artifacts</h4><p>Agents talk through versioned files &amp; a run ledger, never fragile chat memory. Messages are disposable; artifacts are authoritative.</p></div>
-        <div class="principle"><h4>demand has a source</h4><p>Autonomy without pressure is drift. A Dreamer raises the north-star; a Critic keeps the dreams honest.</p></div>
+        <div class="principle"><h3>scenario = contract</h3><p>Truth is a real user goal with a visible success condition — not the code, not the agent's memory, not the current UI.</p></div>
+        <div class="principle"><h3>reality is the judge</h3><p>A change is "done" only when an <em>independent</em> agent confirms the scenario passes in a real browser. No self-approval.</p></div>
+        <div class="principle"><h3>git is the safety net</h3><p>Every change is a commit on a branch in the target repo. The organism can't destroy work; its whole evolution is replayable.</p></div>
+        <div class="principle"><h3>separation of powers</h3><p>Generator may read code; the runner may not; the fixer must; the verifier is independent of the fixer. The loop can't rubber-stamp itself.</p></div>
+        <div class="principle"><h3>durable artifacts</h3><p>Agents talk through versioned files &amp; a run ledger, never fragile chat memory. Messages are disposable; artifacts are authoritative.</p></div>
+        <div class="principle"><h3>demand has a source</h3><p>Autonomy without pressure is drift. A Dreamer raises the north-star; a Critic keeps the dreams honest.</p></div>
       </div>
     </div>
   </section>
@@ -323,23 +338,25 @@
   <!-- THE LOOP -->
   <section id="loop">
     <div class="sec-head"><span class="sec-num">02</span><h2>The loop</h2></div>
-    <p class="sec-sub">Seven cooperating roles, each an instance of a coding-agent engine, deliberately given different knowledge and permissions — orchestrated by a deterministic state machine and observed live.</p>
+    <p class="sec-sub">Nine cooperating roles, each an instance of a coding-agent engine, deliberately given different knowledge and permissions — orchestrated by a deterministic state machine and observed live.</p>
     <div class="loop reveal">
-      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">demand</div><h4>Dreamer</h4><p>Reads the north-star &amp; product, proposes the next ambition — features that add real value.</p><div class="perm">reads code · no write</div></div>
-      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">demand</div><h4>Critic</h4><p>Skeptical product owner. Challenges each dream — real value or bloat? Only survivors advance.</p><div class="perm">reads code · no write</div></div>
-      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">discovery</div><h4>Scenario Generator</h4><p>Turns demands into user-centered, black-box scenarios with stable IDs &amp; success criteria.</p><div class="perm">reads code (discovery only)</div></div>
-      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">validate</div><h4>Runner</h4><p>Black-box. Drives the running app like a user via Playwright MCP, classifies pass/fail/flaky.</p><div class="perm">no source access</div></div>
-      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">triage</div><h4>Failure Triage</h4><p>Dedupes failures, classifies real bugs, opens tracked work with full evidence (Jira-backed).</p><div class="perm">evidence only</div></div>
-      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">repair</div><h4>Implementation</h4><p>Reads the issue, scenario &amp; evidence; makes the smallest safe fix; never closes its own ticket.</p><div class="perm">reads + writes code</div></div>
-      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">verify</div><h4>Verification</h4><p>Independent of the fixer. Reruns the exact scenario in a real browser before anything is "done".</p><div class="perm">closes work — only after proof</div></div>
-      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">spine</div><h4>Orchestrator + Console</h4><p>Deterministic state machine, git safety net, attempt limits, crash recovery — streamed to mission control.</p><div class="perm">built in Phase 0</div></div>
+      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">bootstrap</div><h3>Scout</h3><p>Runs once at <b>adapt init</b>. Reads the target repo and drafts the north-star the whole loop steers toward.</p><div class="perm">reads repo · writes north-star.md</div></div>
+      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">demand</div><h3>Dreamer</h3><p>Reads the north-star &amp; product, proposes the next ambition — features that add real value.</p><div class="perm">reads code + explores the live app · no write</div></div>
+      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">demand</div><h3>Critic</h3><p>Skeptical product owner. Challenges each dream — real value or bloat? Only survivors advance.</p><div class="perm">reads code · no write</div></div>
+      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">discovery</div><h3>Scenario Generator</h3><p>Turns demands into user-centered, black-box scenarios with stable IDs &amp; success criteria.</p><div class="perm">reads code (discovery only) + the live app</div></div>
+      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">validate</div><h3>Runner</h3><p>Black-box. Drives the running app like a user via Playwright MCP, classifies pass/fail/flaky.</p><div class="perm">no source access</div></div>
+      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">triage</div><h3>Failure Triage</h3><p>Dedupes failures, classifies real bugs, opens tracked work with full evidence (Jira-backed).</p><div class="perm">inspects the failing page · no code writes</div></div>
+      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">repair</div><h3>Implementation</h3><p>Reads the issue, scenario &amp; evidence; makes the smallest safe fix; never closes its own ticket.</p><div class="perm">reads + writes code</div></div>
+      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">verify</div><h3>Verification</h3><p>Independent of the fixer. Reruns the exact scenario in a real browser before anything is "done".</p><div class="perm">closes work — only after proof</div></div>
+      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">graduate</div><h3>Graduation</h3><p>Once a scenario has passed enough times in a row, rewrites it as a deterministic Playwright spec and retires it from the LLM loop.</p><div class="perm">reads source · writes tests only</div></div>
+      <div class="node"><span class="tag live"><span style="font-size:9px">●</span> live</span><div class="role">spine</div><h3>Orchestrator + Console</h3><p>Deterministic state machine, git safety net, attempt limits, crash recovery — streamed to mission control.</p><div class="perm">built in Phase 0</div></div>
     </div>
   </section>
 
   <!-- BUILT -->
   <section id="built">
     <div class="sec-head"><span class="sec-num">03</span><h2>What's built</h2></div>
-    <p class="sec-sub">All four phases are live: the rails + console, the autonomous spine, the demand engine that dreams up new work, and the endurance loop that runs it non-stop while graduating proven scenarios into cheap deterministic tests — all on a stub. 83 tasks, test-driven, every plan independently reviewed by Opus 4.7.</p>
+    <p class="sec-sub">Every phase is live: the rails + console, the autonomous spine, the demand engine that dreams up new work, the endurance loop that runs it non-stop while graduating proven scenarios into cheap deterministic tests, and the lanes that let several lineages evolve in parallel. Test-driven throughout, every plan independently reviewed before it landed.</p>
     <div class="builds reveal">
       <div class="build">
         <h3>① Workspace &amp; config foundation</h3>
@@ -408,33 +425,46 @@
       <div class="term-bar"><i></i><i></i><i></i><span>zsh — adapt</span></div>
 <pre><span class="c"># 1 · plug adapt into any full-stack project</span>
 <span class="p">adapt</span> <span class="a">init</span> ./my-app <span class="o">--app-base-url</span> http://localhost:3000
-<span class="out">  created  ./my-app/.adapt/config.example.json
-  created  ./my-app/.adapt/north-star.md
+<span class="out">  created  ./my-app/.adapt/
   created  ./my-app/.adapt/scenarios/examples/example.login.md
+  created  ./my-app/.adapt/config.example.json
+  created  ./my-app/.adapt/.gitignore
+  created  ./my-app/.adapt/north-star.md
   adapt workspace ready at ./my-app/.adapt</span>
 
-<span class="c"># 2 · edit .adapt/config.json, seed real scenarios in .adapt/scenarios/</span>
+<span class="c"># 2 · cp .adapt/config.example.json .adapt/config.json and edit it, then copy a</span>
+<span class="c">#     scenario UP out of examples/ — only *.md at the top level of scenarios/ runs</span>
 
 <span class="c"># 3 · run the autonomous loop</span>
 <span class="p">adapt</span> <span class="a">run-scenarios</span> ./my-app     <span class="c"># validate scenarios in a real browser</span>
 <span class="p">adapt</span> <span class="a">triage-failures</span> ./my-app  <span class="c"># dedup + file work-items</span>
 <span class="p">adapt</span> <span class="a">orchestrate</span> ./my-app      <span class="c"># one bounded pass: validate → triage → fix → verify</span>
 <span class="p">adapt</span> <span class="a">evolve</span> ./my-app           <span class="c"># the full organism: dream → critique → generate → cycle</span>
-<span class="p">adapt</span> <span class="a">run</span> ./my-app              <span class="c"># non-stop: loop evolve until a guardrail or Ctrl-C</span>
+<span class="p">adapt</span> <span class="a">run</span> ./my-app <span class="o">--console</span> 4399  <span class="c"># non-stop: loop evolve until a guardrail or Ctrl-C</span>
 
-<span class="c"># 4 · watch it think, live</span>
-<span class="p">adapt</span> <span class="a">console</span> ./my-app <span class="o">--port</span> 4399
+<span class="c"># 4 · fork parallel lineages off a named baseline</span>
+<span class="p">adapt</span> <span class="a">baseline create</span> v1 ./my-app        <span class="c"># tag the current HEAD as a fork point</span>
+<span class="p">adapt</span> <span class="a">lane create</span> a ./my-app <span class="o">--baseline</span> v1 <span class="c"># a git worktree with its own ports + db</span>
+<span class="p">adapt</span> <span class="a">lane start</span> a ./my-app            <span class="c"># also: lane list | stop | reset | destroy</span>
+
+<span class="c"># 5 · watch it think, live</span>
+<span class="p">adapt</span> <span class="a">console</span> ./my-app <span class="o">--port</span> 4399  <span class="c"># one run</span>
+<span class="p">adapt</span> <span class="a">monitor</span> ./my-app <span class="o">--port</span> 4500  <span class="c"># every lane, side by side</span>
 <span class="out">  adapt console at http://127.0.0.1:4399  (Ctrl-C to stop)</span></pre>
     </div>
     <div class="tree reveal">
 <pre><span class="ac">&lt;your-product&gt;/</span>            <span style="color:var(--faint)"># adapt is pointed here; agents commit into this repo</span>
   <b>.adapt/</b>                  <span style="color:var(--faint)"># per-target workspace (created on init)</span>
-    config.json           <span style="color:var(--faint)"># target-specific: app URL, start cmd, db hooks, Jira</span>
+    config.json           <span style="color:var(--faint)"># target-specific: app URL, db hooks, limits, Jira</span>
     <b>north-star.md</b>         <span style="color:var(--faint)"># the "genome" — versioned; watch ambition evolve</span>
     scenarios/            <span style="color:var(--faint)"># user-centered scenarios (the contract)</span>
+      examples/           <span style="color:var(--faint)"># templates only; NOT indexed, NOT run</span>
     scenario-runs/        <span style="color:var(--faint)"># append-only run ledger</span>
     work-items/           <span style="color:var(--faint)"># tracked failures</span>
-    decision-log/         <span style="color:var(--faint)"># narrated timeline — the primary deliverable</span></pre>
+    demands/              <span style="color:var(--faint)"># what the Dreamer/Critic decided to build next</span>
+    baselines/            <span style="color:var(--faint)"># named fork points that lanes branch from</span>
+    decision-log/         <span style="color:var(--faint)"># narrated timeline — the primary deliverable</span>
+    state.db              <span style="color:var(--faint)"># orchestrator state (gitignored)</span></pre>
     </div>
   </section>
 
@@ -445,21 +475,26 @@
     <div class="phases reveal">
       <div class="phase done">
         <div class="marker"><span class="ph-id">0</span><span class="ph-state">✓ complete</span></div>
-        <div class="body"><h4>Rails &amp; console</h4><p>Workspace + config, orchestrator state machine, SQLite store &amp; run ledger, agent harness, decision log, live web console. Driven end-to-end by a stub agent.</p></div>
+        <div class="body"><h3>Rails &amp; console</h3><p>Workspace + config, orchestrator state machine, SQLite store &amp; run ledger, agent harness, decision log, live web console. Driven end-to-end by a stub agent.</p></div>
       </div>
       <div class="phase done">
         <div class="marker"><span class="ph-id">1</span><span class="ph-state">✓ complete</span></div>
-        <div class="body"><h4>The autonomous spine</h4><p>Scenario Runner → Failure Triage (Jira) → Implementation → independent Verification, wired into <b>adapt orchestrate</b>. Closed-loop validate-and-repair with DB hooks &amp; attempt limits — stub-tested, ready for the first real run.</p></div>
+        <div class="body"><h3>The autonomous spine</h3><p>Scenario Runner → Failure Triage (Jira) → Implementation → independent Verification, wired into <b>adapt orchestrate</b>. Closed-loop validate-and-repair with DB hooks &amp; attempt limits — stub-tested, ready for the first real run.</p></div>
       </div>
       <div class="phase done">
         <div class="marker"><span class="ph-id">2</span><span class="ph-state">✓ complete</span></div>
-        <div class="body"><h4>Demand engine</h4><p>Dreamer + Critic (adversarial pairing) + source-aware Scenario Generator, wired into <b>adapt evolve</b>. The loop chooses its own work and the Dreamer appends ambition to the north-star — stub-tested.</p></div>
+        <div class="body"><h3>Demand engine</h3><p>Dreamer + Critic (adversarial pairing) + source-aware Scenario Generator, wired into <b>adapt evolve</b>. The loop chooses its own work and the Dreamer appends ambition to the north-star — stub-tested.</p></div>
       </div>
       <div class="phase done">
         <div class="marker"><span class="ph-id">3</span><span class="ph-state">✓ complete</span></div>
-        <div class="body"><h4>Endurance &amp; graduation</h4><p><b>adapt run</b> loops <b>evolve</b> non-stop under guardrails (max cycles / wall-clock / consecutive errors). Proven scenarios graduate into deterministic Playwright specs and leave the LLM loop; verifier-inconclusive handling, reopened re-drive, and demand dedup make a cycle safe to repeat forever — stub-tested.</p></div>
+        <div class="body"><h3>Endurance &amp; graduation</h3><p><b>adapt run</b> loops <b>evolve</b> non-stop under guardrails (max cycles / wall-clock / consecutive errors). Proven scenarios graduate into deterministic Playwright specs and leave the LLM loop; verifier-inconclusive handling, reopened re-drive, and demand dedup make a cycle safe to repeat forever — stub-tested.</p></div>
+      </div>
+      <div class="phase done">
+        <div class="marker"><span class="ph-id">4</span><span class="ph-state">✓ complete</span></div>
+        <div class="body"><h3>Lanes &amp; the multi-lane console</h3><p>Named <b>baselines</b> tag a fork point; <b>lanes</b> are git worktrees with their own branch, ports, database and optional model, so several lineages evolve from one baseline in parallel. <b>adapt monitor</b> watches them all in one dashboard, with per-lane and global start / pause / continue / restart / stop and a Cycles view that opens each step's prompt and output.</p></div>
       </div>
     </div>
+    <p class="sec-sub" style="margin-top:28px;">All of it is implemented and stub-tested end to end. The honest open question is real-world endurance: how well the LLM oracle holds up over long unattended runs against a live product.</p>
   </section>
 
   <!-- BUILD LOG -->
@@ -468,28 +503,38 @@
     <p class="sec-sub">A living record — every phase appends here. This file is the canonical human-facing history of adapt's own construction.</p>
     <div class="log reveal">
       <div class="entry">
+        <div class="date">2026 · 06 · 14 — lane controls &amp; Jira on by default</div>
+        <h3>The monitor gains a control plane</h3>
+        <p>Lanes became drivable from the browser: a <code>control.json</code> per lane carries pause / stop / maxCycles, <code>runContinuous</code> honours it mid-loop, and the monitor grew per-lane and global start / pause / continue / restart / stop buttons. The Cycles view arrived alongside — a pure <code>buildCycles</code> segmenter turning the raw event log into cycles and steps, with each step's INPUT and OUTPUT openable inline. A step's verdict now comes from the agent's exit code rather than the presence of benign stderr. <code>run.maxCycles</code> and <code>run.maxWallClockSeconds</code> default to <code>null</code> (unbounded), so guardrails are an explicit choice. Jira via <code>mcp-atlassian</code> is enabled by default, with PAT and Cloud credentials kept mutually exclusive so an ambient token cannot hijack a self-hosted run.</p>
+      </div>
+      <div class="entry">
+        <div class="date">2026 · 05 · 28 — baselines, lanes &amp; the multi-lane console</div>
+        <h3>Parallel evolutionary lineages</h3>
+        <p><code>adapt baseline create</code> tags a fork point; <code>adapt lane create</code> spins a git worktree with its own branch, port block, database and optional model. Lanes run the same loop in isolation, so several lineages can evolve from one baseline at once and be compared. <code>adapt monitor</code> watches all of them in one dashboard, streaming from any lane whose loop is live and replaying each lane's decision log otherwise.</p>
+      </div>
+      <div class="entry">
         <div class="date">2026 · 05 · 26 — Phase 3 merged</div>
-        <h4>Endurance &amp; graduation land on <code>main</code> — the organism is complete</h4>
+        <h3>Endurance &amp; graduation land on <code>main</code> — the organism is complete</h3>
         <p>Three plans — robustness carryovers (verifier-inconclusive, reopened re-drive, demand dedup), graduation (proven scenarios → deterministic Playwright specs, retired from the LLM loop), and <code>adapt run</code> (a bounded continuous <code>evolve</code> loop with guardrails). Opus-reviewed with fixes en route (a gray-matter cache-poisoning bug in the frontmatter writer, guardrail-aware pause, explicit stop). 184 tests passing, typecheck clean. adapt now runs on its own — dream → critique → generate → validate → triage → repair → verify, cycle after cycle, until a guardrail or Ctrl-C. Next: the first real run on a live app.</p>
       </div>
       <div class="entry">
         <div class="date">2026 · 05 · 26 — Phase 2 merged</div>
-        <h4>The demand engine lands on <code>main</code></h4>
+        <h3>The demand engine lands on <code>main</code></h3>
         <p>16 TDD tasks via subagent-driven development (Opus 4.7 throughout) across three plans — Demand model + Dreamer + Critic, the Scenario Generator, and <code>adapt evolve</code>. Plan 7 Opus-reviewed; Plans 8–9 + integration controller-reviewed; fixes en route (a <code>DemandStatus</code> type export, a generator-stub typecheck). 155 tests passing, typecheck clean. The Dreamer now appends ambition to the north-star (append-only, git-versioned) and <code>evolve</code> runs the whole organism — dream → critique → generate → validate → triage → repair → verify — on a stub.</p>
       </div>
       <div class="entry">
         <div class="date">2026 · 05 · 26 — Phase 1 merged</div>
-        <h4>The autonomous spine lands on <code>main</code></h4>
+        <h3>The autonomous spine lands on <code>main</code></h3>
         <p>22 TDD tasks via subagent-driven development (Opus 4.7 throughout) across three plans — Runner, Triage + tracker, Implementation + Verification + orchestrate. Every plan Opus-reviewed; findings fixed (verdict guard against illegal transitions, runnable-status filter, a runRole schema-input widening, an <code>as const</code> typecheck break). 126 tests passing, typecheck clean. <code>run-scenarios</code>, <code>triage-failures</code>, and <code>orchestrate</code> close the loop on a stub — next is the first real run.</p>
       </div>
       <div class="entry">
         <div class="date">2026 · 05 · 26 — Phase 0 merged</div>
-        <h4>Rails &amp; console land on <code>main</code></h4>
+        <h3>Rails &amp; console land on <code>main</code></h3>
         <p>29 TDD tasks via subagent-driven development across three plans (workspace/config, orchestrator, harness/console). Every plan independently reviewed by Opus 4.7; findings fixed (ledger/recovery consistency, a stream-parser crash guard, ws ordering, dashboard hardening). 74 tests passing, typecheck clean. <code>adapt init</code> and <code>adapt console</code> work end-to-end.</p>
       </div>
       <div class="entry">
         <div class="date">2026 · 05 · 26 — design frozen</div>
-        <h4>Blueprint &amp; Phase-0 plans committed</h4>
+        <h3>Blueprint &amp; Phase-0 plans committed</h3>
         <p>Brainstormed the full organism, then froze decisions: generic/plug-and-play, Phase-A build order (spine before dreamer), Node + TypeScript, web console, Jira behind a swappable adapter. Three detailed TDD implementation plans written for Phase 0.</p>
       </div>
     </div>

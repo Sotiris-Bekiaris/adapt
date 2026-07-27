@@ -10,10 +10,18 @@ describe("AdaptConfigSchema", () => {
     expect(parsed.engine.type).toBe("claude-code");
     expect(parsed.console.port).toBe(4399);
     expect(parsed.limits.maxFixAttempts).toBe(2);
-    expect(parsed.jira.enabled).toBe(true);
-    expect(parsed.jira.baseUrl).toBe("http://localhost:8080");
-    expect(parsed.mcp.jira.enabled).toBe(true);
+    // Jira is opt-in: out of the box adapt uses its built-in local tracker.
+    expect(parsed.mcp.jira.enabled).toBe(false);
+    // mcp.jira.enabled is the single gate; projectKey is the only other Jira key that exists.
+    expect(Object.keys(parsed.jira)).toEqual(["projectKey"]);
+    expect(parsed.jira.projectKey).toBe("");
     expect(parsed.mcp.playwright.enabled).toBe(true);
+  });
+
+  it("defaults engine.skipPermissions to true and honours an explicit false", () => {
+    const base = { targetRepoPath: "/repo", appBaseUrl: "http://localhost:3000" };
+    expect(AdaptConfigSchema.parse(base).engine.skipPermissions).toBe(true);
+    expect(AdaptConfigSchema.parse({ ...base, engine: { skipPermissions: false } }).engine.skipPermissions).toBe(false);
   });
 
   it("rejects a non-url appBaseUrl", () => {

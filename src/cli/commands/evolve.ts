@@ -1,6 +1,5 @@
 import type { AgentEngine } from "../../engine/types.ts";
-import { StubEngine } from "../../engine/stubEngine.ts";
-import { ClaudeCodeEngine } from "../../engine/claudeCode.ts";
+import { engineFor } from "./engineFor.ts";
 import { StateStore } from "../../orchestrator/store.ts";
 import { loadConfig } from "../../config/load.ts";
 import { workspacePaths } from "../../workspace/paths.ts";
@@ -24,7 +23,7 @@ export async function evolveCmd(opts: EvolveCmdOptions): Promise<EvolveCmdResult
   const log = opts.log ?? console.log;
   const config = loadConfig(opts.targetRepo);
   const ws = workspacePaths(opts.targetRepo);
-  const engine = opts.engine ?? (config.engine.type === "stub" ? new StubEngine() : new ClaudeCodeEngine({ command: config.engine.command }));
+  const engine = opts.engine ?? engineFor(config);
   const store = new StateStore(`${ws.root}/state.db`);
 
   const bus = new EventBus<ConsoleEvent>();

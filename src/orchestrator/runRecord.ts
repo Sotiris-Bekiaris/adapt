@@ -19,7 +19,6 @@ export const RunRecordSchema = z.object({
   networkErrors: z.array(z.string()),
   screenshots: z.array(z.string()),
   artifacts: z.array(z.string()),
-  linkedJiraIssue: z.string().nullable(),
   runnerNotes: z.string().nullable(),
 });
 
@@ -47,7 +46,6 @@ export function newRunRecord(init: {
     networkErrors: [],
     screenshots: [],
     artifacts: [],
-    linkedJiraIssue: null,
     runnerNotes: null,
   };
 }

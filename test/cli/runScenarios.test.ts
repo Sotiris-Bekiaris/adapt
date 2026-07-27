@@ -28,7 +28,7 @@ function passEngine() {
       runId: "x", scenarioId: sid, scenarioTitle: sid, status: "passed", startedAt: "t", finishedAt: "t",
       appBaseUrl: "http://localhost:3000", appVersion: null, environment: "local", stepsExecuted: 1,
       failureStep: null, expectedOutcome: "x", actualOutcome: "x", consoleErrors: [], networkErrors: [],
-      screenshots: [], artifacts: [], linkedJiraIssue: null, runnerNotes: "" }), "utf8");
+      screenshots: [], artifacts: [], runnerNotes: "" }), "utf8");
     return [{ kind: "agent.exit", role: spec.role, at: "t", exitCode: 0 }];
   }});
 }

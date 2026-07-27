@@ -4,9 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>adapt · multi-lane console</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='%2389b4fa'/%3E%3C/svg%3E" />
     <link rel="stylesheet" href="/styles.css" />
     <style>
-      .page { display: flex; height: calc(100vh - 44px); }
+      /* body is a flex column (styles.css); .page takes the remaining height
+         rather than subtracting a hard-coded header height, so the layout
+         survives a wrapped <h1> or an extra toolbar row. */
+      .page { display: flex; flex: 1; min-height: 0; }
       #lanes {
         width: 260px;
         flex: 0 0 260px;
@@ -19,12 +23,11 @@
         font-size: 11px;
         letter-spacing: .06em;
         text-transform: uppercase;
-        color: #6c7086;
+        color: #868da8;
         padding: .3rem .8rem .5rem;
       }
       .lane {
         padding: .45rem .8rem;
-        cursor: pointer;
         border-bottom: 1px dotted #1b2230;
         display: flex;
         flex-direction: column;
@@ -32,12 +35,22 @@
       }
       .lane:hover { background: #11151f; }
       .lane.active { background: #1b2230; border-left: 2px solid #89b4fa; padding-left: calc(.8rem - 2px); }
-      .lane .lane-top { display: flex; align-items: center; gap: .4rem; }
+      /* The lane row contains buttons and an input, so the row itself cannot be
+         a button — the selectable part is. `all: unset` then re-add layout. */
+      .lane .lane-select {
+        all: unset;
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        width: 100%;
+        cursor: pointer;
+        box-sizing: border-box;
+      }
       .lane .dot { font-size: 11px; }
       .lane.running .dot { color: #a6e3a1; }
-      .lane.stopped .dot { color: #6c7086; }
+      .lane.stopped .dot { color: #868da8; }
       .lane .lane-id { color: #cdd6f4; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .lane .lane-meta { font-size: 11px; color: #6c7086; padding-left: 1.1rem; }
+      .lane .lane-meta { font-size: 11px; color: #868da8; padding-left: 1.1rem; }
       .lane .lane-model { color: #cba6f7; }
       .lane .lane-cycle { color: #f9e2af; }
       .focus-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
@@ -52,9 +65,9 @@
       }
       #focus-header .fh-id { color: #89b4fa; font-weight: 600; }
       #focus-header .fh-status.running { color: #a6e3a1; }
-      #focus-header .fh-status.stopped { color: #6c7086; }
+      #focus-header .fh-status.stopped { color: #868da8; }
       #focus-header .fh-cycle { color: #f9e2af; }
-      #focus-header .fh-empty { color: #6c7086; }
+      #focus-header .fh-empty { color: #868da8; }
       .focus-body { display: grid; grid-template-columns: 1fr 320px; flex: 1; min-height: 0; }
       #view-toggle {
         display: flex;
@@ -68,7 +81,7 @@
         font-size: 11px;
         letter-spacing: .04em;
         text-transform: uppercase;
-        color: #6c7086;
+        color: #868da8;
         background: transparent;
         border: 1px solid #1f2430;
         border-radius: 4px;
@@ -80,35 +93,68 @@
       .focus-body.cycles-mode { display: block; }
       .focus-body.cycles-mode #agents,
       .focus-body.cycles-mode #timeline { display: none; }
-      .focus-body.cycles-mode #cycles { display: block; }
+      /* height:100% so the cycles list scrolls inside its own pane instead of
+         spilling past the viewport once a lane has many cycles. */
+      .focus-body.cycles-mode #cycles { display: block; height: 100%; }
       .cycle { border: 1px solid #1f2430; border-radius: 6px; margin-bottom: .5rem; background: #0d1018; }
+      /* Cycle and step headers are real <button>s (disclosure controls), so the
+         whole Cycles view is keyboard-operable. Strip the UA button chrome. */
+      .cycle-h, .step-h {
+        width: 100%;
+        text-align: left;
+        background: none;
+        border: 0;
+        color: inherit;
+        font: inherit;
+      }
       .cycle-h { display: flex; align-items: center; gap: .5rem; padding: .45rem .6rem; cursor: pointer; font-size: 12px; }
       .cycle-h:hover { background: #11151f; }
-      .cycle-h .caret { color: #6c7086; width: 1ch; }
+      .cycle-h .caret { color: #868da8; width: 1ch; }
       .cycle-h .cycle-title { color: #cdd6f4; font-weight: 600; }
       .cycle-h .dot.running { color: #a6e3a1; }
       .cycle-h .dot.done { color: #89b4fa; }
       .cycle-h .dot.error { color: #f38ba8; }
-      .cycle-h .cycle-meta { color: #6c7086; margin-left: auto; }
+      .cycle-h .cycle-meta { color: #868da8; margin-left: auto; }
       .cycle-body { padding: .2rem .5rem .5rem; }
       .step { border-top: 1px dotted #1b2230; }
       .step-h { display: flex; align-items: center; gap: .5rem; padding: .35rem .3rem; cursor: pointer; font-size: 12px; }
       .step-h:hover { background: #11151f; }
-      .step-idx { color: #6c7086; }
+      .step-idx { color: #868da8; }
       .step-role { color: #cba6f7; font-weight: 600; }
       .step-status { font-size: 11px; }
       .step-status.running { color: #a6e3a1; }
-      .step-status.done { color: #6c7086; }
+      .step-status.done { color: #868da8; }
       .step-status.error { color: #f38ba8; }
       .step-sum { color: #bac2de; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .step-detail { padding: .2rem .3rem .5rem; display: flex; flex-direction: column; gap: .4rem; }
       .io-block { border: 1px solid #1f2430; border-radius: 4px; }
-      .io-label { font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: #6c7086; padding: .25rem .5rem; border-bottom: 1px solid #1f2430; }
+      .io-label { font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: #868da8; padding: .25rem .5rem; border-bottom: 1px solid #1f2430; }
       .io-text { margin: 0; padding: .4rem .5rem; font-size: 12px; color: #cdd6f4; white-space: pre-wrap; word-break: break-word; height: 200px; min-height: 48px; max-height: 80vh; overflow-y: auto; resize: vertical; }
-      .controls-bar { display: flex; gap: 4px; flex-wrap: wrap; padding: 6px; }
-      .controls-bar button, .lane-controls button { font: inherit; cursor: pointer; padding: 2px 6px; }
-      .lane-controls { display: flex; gap: 3px; flex-wrap: wrap; margin-top: 4px; }
-      .lane-controls input { width: 48px; }
+
+      /* --- controls -------------------------------------------------------- */
+      #global-controls {
+        flex: none;
+        background: #0d1018;
+        border-bottom: 1px solid #1f2430;
+      }
+      .controls-bar { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; padding: 6px; }
+      .lane-controls { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; margin-top: 4px; }
+      .controls-bar button,
+      .lane-controls button,
+      .controls-bar input,
+      .lane-controls input {
+        font: inherit;
+        font-size: 11px;
+        color: #cdd6f4;
+        background: #11151f;
+        border: 1px solid #1f2430;
+        border-radius: 4px;
+        padding: .15rem .5rem;
+      }
+      .controls-bar button, .lane-controls button { cursor: pointer; }
+      .controls-bar button:hover:not(:disabled),
+      .lane-controls button:hover:not(:disabled) { border-color: #89b4fa; background: #1b2230; }
+      .controls-bar input, .lane-controls input { width: 56px; }
       .lane.paused .dot { color: #d8a657; }
       button:disabled { opacity: 0.4; cursor: default; }
     </style>
@@ -116,30 +162,33 @@
   <body>
     <header>
       <h1>adapt · multi-lane console</h1>
-      <span id="status" class="disconnected">connecting…</span>
+      <!-- role="status" implies aria-live="polite": connection changes are
+           announced without interrupting, which is what a status pill wants. -->
+      <span id="status" class="disconnected" role="status">connecting…</span>
     </header>
+    <div id="global-controls" class="controls-bar" role="group" aria-label="all lanes">
+      <button type="button" data-act="start" data-lane="*">▶ start all</button>
+      <button type="button" data-act="pause" data-lane="*">⏸ pause all</button>
+      <button type="button" data-act="continue" data-lane="*">▶ continue all</button>
+      <button type="button" data-act="stop" data-lane="*">■ stop all</button>
+      <label for="global-maxcycles" class="sr-only" hidden>maxCycles for start</label>
+      <input id="global-maxcycles" type="number" min="0" placeholder="∞" aria-label="maxCycles for start (blank = infinite)" title="maxCycles for start (blank=∞)" />
+    </div>
     <div class="page">
-      <div id="global-controls" class="controls-bar">
-        <button data-act="start" data-lane="*">▶ start all</button>
-        <button data-act="pause" data-lane="*">⏸ pause all</button>
-        <button data-act="continue" data-lane="*">▶ continue all</button>
-        <button data-act="stop" data-lane="*">■ stop all</button>
-        <input id="global-maxcycles" type="number" min="0" placeholder="∞" title="maxCycles for start (blank=∞)" />
-      </div>
-      <nav id="lanes">
+      <nav id="lanes" aria-label="lanes">
         <div class="lanes-h">lanes</div>
       </nav>
       <div class="focus-main">
         <div id="focus-header"><span class="fh-empty">no lane focused</span></div>
-        <div id="view-toggle">
+        <div id="view-toggle" role="group" aria-label="view">
           <button type="button" data-view="cycles" class="active">Cycles</button>
           <button type="button" data-view="stream">Stream</button>
         </div>
         <div class="focus-body">
-          <section id="cycles" class="cycles"></section>
-          <section id="agents" class="agents"></section>
-          <aside id="timeline" class="timeline">
-            <h2>decision timeline</h2>
+          <section id="cycles" class="cycles" aria-label="cycles"></section>
+          <section id="agents" class="agents" aria-label="agent event stream"></section>
+          <aside id="timeline" class="timeline" aria-labelledby="timeline-h">
+            <h2 id="timeline-h">decision timeline</h2>
             <ol id="timeline-list"></ol>
           </aside>
         </div>

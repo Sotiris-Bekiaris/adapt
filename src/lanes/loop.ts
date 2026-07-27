@@ -22,10 +22,20 @@ export interface StartLaneLoopOptions {
   log?: (msg: string) => void;
 }
 
+/**
+ * Argv for the detached loop child. `--console <port>` is what makes a backgrounded lane
+ * observable: without it runCmd starts no ObservabilityServer, the monitor's `ws://127.0.0.1:
+ * <consolePort>/ws` connect fails, and the lane can only be replayed from its decision log.
+ * Mirrors the foreground path, which passes the same manifest port straight to runCmd.
+ */
+export function detachedRunArgs(entrypoint: string, worktree: string, consolePort: number): string[] {
+  return [entrypoint, "run", worktree, "--console", String(consolePort)];
+}
+
 /** Default detached spawn: re-invoke `adapt run <worktree>` as an unref'd background process. */
-function defaultSpawnDetached(worktree: string): number {
+function defaultSpawnDetached(worktree: string, consolePort: number): number {
   const entrypoint = process.argv[1] ?? "";
-  const child = spawn(process.execPath, [entrypoint, "run", worktree], {
+  const child = spawn(process.execPath, detachedRunArgs(entrypoint, worktree, consolePort), {
     cwd: worktree, detached: true, stdio: "ignore",
     env: { ...process.env },
   });
@@ -52,7 +62,7 @@ export async function startLaneLoop(opts: StartLaneLoopOptions): Promise<number>
   }
 
   if (opts.detach) {
-    const spawnDetached = opts.spawnDetached ?? (() => defaultSpawnDetached(opts.worktree));
+    const spawnDetached = opts.spawnDetached ?? (() => defaultSpawnDetached(opts.worktree, manifest.consolePort));
     const pid = spawnDetached();
     writeFileSync(pidfilePath(opts.worktree), `${pid}\n`, "utf8");
     log(`  started  lane "${manifest.laneId}" loop in background (pid ${pid})`);

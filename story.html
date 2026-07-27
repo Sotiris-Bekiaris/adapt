@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>adapt — watch a product evolve like an organism</title>
 <meta name="description" content="An interactive, scroll-driven story of adapt: a closed loop of coding agents that decides what to build, what to fix, and evolves a real product over many cycles — with no human in the loop." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='%23b8ff35'/%3E%3C/svg%3E" />
+<!-- Webfonts load from Google Fonts, so opening this file offline (or from a
+     clone with no network) sends nothing and renders immediately in the declared
+     fallbacks: Georgia for the display face, the system mono stack for the rest.
+     &display=swap keeps text visible while the request is in flight. -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..700&family=JetBrains+Mono:ital,wght@0,400..700;1,400..600&display=swap" rel="stylesheet" />
@@ -17,7 +22,11 @@
     --line-2: #2a3849;
     --text: #cdd8e4;
     --muted: #75869a;
-    --faint: #4a586a;
+    /* #4a586a was 2.70:1 on --ink — below the WCAG AA floor for the small
+       labels, SVG ordinals and console timestamps that use it. #6f8296 keeps
+       the same hue and recessed role, clearing 4.5:1 on every surface here
+       (4.55 on the lightest panel, 4.95 on the page background). */
+    --faint: #6f8296;
     --accent: #b8ff35;      /* bioluminescent lime — "alive / active" */
     --accent-dim: #7ea827;
     --amber: #ffb454;       /* secondary — pending / caution */
@@ -74,6 +83,9 @@
 
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  /* Baseline keyboard focus ring for the CTAs; the rail ticks add their own
+     label reveal on top of this. */
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
 
   /* ---------- stage label (fixed) ---------- */
   .stage {
@@ -106,7 +118,11 @@
     opacity: 0; pointer-events: none; transition: opacity .25s ease, transform .25s ease;
     background: rgba(9,12,17,.85); padding: 2px 8px; border-radius: 5px; border: 1px solid var(--line);
   }
-  .rail .tick:hover::after { opacity: 1; transform: translateY(-50%) translateX(0); }
+  /* The rail is 12 identical 9px dots: without revealing the label on focus, a
+     keyboard user tabbing through it sees no visible change at all. */
+  .rail .tick:hover::after,
+  .rail .tick:focus-visible::after { opacity: 1; transform: translateY(-50%) translateX(0); }
+  .rail .tick:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   .rail .tick.active {
     background: var(--accent); border-color: var(--accent);
     box-shadow: 0 0 12px rgba(184,255,53,.7); transform: scale(1.25);
@@ -385,6 +401,8 @@
     .core .pulse-halo { display: none; }
     .console-ov .row { opacity: 1 !important; }
     .console-ov .cur { animation: none; }
+    /* `transition: all` on .tick still animated the active dot's scale(1.25). */
+    .rail .tick { transition: none; }
   }
 </style>
 </head>
@@ -413,12 +431,17 @@
   <div class="scrollcue"><span class="arrow">↓</span> scroll to begin</div>
   <div class="expand">
     <span><b>A</b>gent <b>D</b>evelopment for <b>A</b>utonomous <b>P</b>roduc<b>T</b>s</span>
-    <span>7 roles · 1 deterministic conductor · 0 humans inside</span>
+    <span>the 7 roles this story walks · 1 deterministic conductor · 0 humans inside</span>
   </div>
 </header>
 
+<!-- The two narrative sections are the page's primary content. <main> gives
+     screen-reader users one landmark to jump past the fixed rail and stage
+     label; it carries no styling, so the layout is unaffected. -->
+<main>
+
 <!-- SCROLLY -->
-<section class="scrolly">
+<section class="scrolly" aria-label="how the loop works, beat by beat">
   <div class="grid">
 
     <!-- LEFT: narration beats -->
@@ -617,11 +640,16 @@
     No finish line — only the next cycle.
   </p>
   <div class="cta">
-    <a class="btn primary" href="README.md">Read the full guide → README.md</a>
+    <!-- Absolute URL, not ./README.md: opened from file:// or from a raw-HTML
+         view, a relative .md link downloads the file instead of rendering it. -->
+    <a class="btn primary" href="https://github.com/Sotiris-Bekiaris/adapt#readme">Read the full guide → README</a>
+    <a class="btn ghost" href="README.md">README.md in this clone →</a>
     <a class="btn ghost" href="readme.html">View the project page →</a>
   </div>
   <div class="sig">built with Claude Code · the human stays outside the loop</div>
 </section>
+
+</main>
 
 <script>
 (function () {

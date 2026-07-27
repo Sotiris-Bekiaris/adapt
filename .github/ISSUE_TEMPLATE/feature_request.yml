@@ -1,0 +1,90 @@
+name: Idea / design proposal
+description: Propose a change to how the loop, the agents, or the CLI work.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        adapt is built spec-first: designs live in `docs/superpowers/specs/`, and the source cites
+        `docs/superpowers/specs/2026-05-25-adapt-design.md` as "blueprint §N". Start here rather than
+        with a PR — a proposal that fits the design gets built; one that doesn't gets a long thread.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What goes wrong today, concretely. Not the feature — the failure it would prevent.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: What you would build, and roughly where in the tree it would live.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of the system
+      options:
+        - demand engine (dreamer / critic / generator)
+        - scenario runner
+        - failure triage
+        - implementation (repair)
+        - verification
+        - graduation
+        - orchestrator state machine / store
+        - lanes & baselines
+        - observability (console, monitor, decision log)
+        - CLI & config
+        - engine adapter / MCP wiring
+        - docs
+        - other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+      description: Including doing nothing, and why that is worse.
+
+  - type: textarea
+    id: verification
+    attributes:
+      label: How it would be tested
+      description: |
+        Everything here is proven against the deterministic `StubEngine` — no test may call a live
+        model. Sketch the stub script or the fixture your change would be verified with.
+
+  - type: checkboxes
+    id: safeguards
+    attributes:
+      label: Safeguards
+      description: >
+        These are the invariants the whole design rests on. A proposal that violates any of them will
+        be declined regardless of how well it works.
+      options:
+        - label: The agent that implements a fix still does not verify it.
+          required: true
+        - label: It does not weaken a scenario's expected outcome to turn a failure into a pass.
+          required: true
+        - label: It does not delete or downgrade passing scenarios.
+          required: true
+        - label: It does not put a human approval step inside the autonomous loop.
+          required: true
+        - label: The orchestrator stays deterministic — no model output decides a state transition.
+          required: true
+        - label: Agents keep communicating only through zod-validated result files.
+          required: true
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Acknowledgement
+      options:
+        - label: I understand adapt is an experimental personal research project, and that ideas may be declined or left open indefinitely.
+          required: true

@@ -1,17 +1,22 @@
 * { box-sizing: border-box; }
-body { margin: 0; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; background: #0b0e14; color: #cdd6f4; }
-header { display: flex; align-items: center; gap: 1rem; padding: .6rem 1rem; background: #11151f; border-bottom: 1px solid #1f2430; }
+/* color-scheme: dark makes UA-rendered controls (number spinners, scrollbars,
+   focus rings) match the palette instead of dropping light widgets into it. */
+body { margin: 0; color-scheme: dark; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; background: #0b0e14; color: #cdd6f4; display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
+header { display: flex; align-items: center; gap: 1rem; padding: .6rem 1rem; background: #11151f; border-bottom: 1px solid #1f2430; flex: none; }
 header h1 { font-size: 14px; margin: 0; letter-spacing: .04em; }
 #status { font-size: 11px; padding: .15rem .5rem; border-radius: 999px; }
 #status.connected { background: #1e3a2a; color: #a6e3a1; }
 #status.disconnected { background: #3a1e22; color: #f38ba8; }
-main { display: grid; grid-template-columns: 1fr 320px; height: calc(100vh - 44px); }
+main { display: grid; grid-template-columns: 1fr 320px; flex: 1; min-height: 0; }
 .agents { display: flex; gap: .5rem; padding: .5rem; overflow-x: auto; }
 .agent-col { min-width: 260px; flex: 1; background: #11151f; border: 1px solid #1f2430; border-radius: 8px; display: flex; flex-direction: column; }
 .agent-col h3 { margin: 0; padding: .4rem .6rem; border-bottom: 1px solid #1f2430; font-size: 12px; color: #89b4fa; }
 .agent-col .events { overflow-y: auto; padding: .4rem .6rem; flex: 1; }
 .ev { padding: .15rem 0; white-space: pre-wrap; word-break: break-word; border-bottom: 1px dotted #1b2230; }
-.ev .k { color: #6c7086; }
+/* #868da8 replaces #6c7086, which failed WCAG AA (3.7-4.0:1) at the 10-11px
+   sizes it is used at. It clears 4.5:1 on every surface in this UI: 5.88 on
+   #0b0e14, 5.78 on #0d1018, 5.55 on #11151f, 4.85 on the #1b2230 active row. */
+.ev .k { color: #868da8; }
 .ev.agent\.thinking .t { color: #9399b2; font-style: italic; }
 .ev.agent\.tool_call .t { color: #f9e2af; }
 .ev.agent\.tool_result .t { color: #94e2d5; }
@@ -21,3 +26,12 @@ main { display: grid; grid-template-columns: 1fr 320px; height: calc(100vh - 44p
 .timeline ol { list-style: none; margin: 0; padding: 0; }
 .timeline li { padding: .2rem 0; border-bottom: 1px dotted #1b2230; color: #bac2de; }
 .timeline li .role { color: #89b4fa; }
+
+/* Empty / waiting states. Both dashboards are blank until a loop streams to
+   them, so every blank pane says what it is waiting for and how to fill it. */
+.empty { color: #868da8; padding: .8rem; margin: 0; font-size: 12px; line-height: 1.65; white-space: pre-wrap; }
+.empty code { color: #cdd6f4; }
+
+/* Single global focus ring: the UA default is nearly invisible on transparent
+   buttons over #0d1018, and every disclosure control here is keyboard-operable. */
+:focus-visible { outline: 2px solid #89b4fa; outline-offset: 2px; border-radius: 3px; }

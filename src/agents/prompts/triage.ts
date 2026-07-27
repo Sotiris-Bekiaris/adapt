@@ -23,7 +23,7 @@ export function triagePrompt(ctx: TriagePromptCtx): string {
   const { record, resultPath, jiraEnabled, projectKey } = ctx;
   const jiraInstruction = jiraEnabled
     ? `Because Jira is enabled, create a Jira issue in project ${projectKey} (type Bug) using the Jira MCP, with the title, the expected vs actual, reproduction = the scenario steps, and the evidence below. Put the created issue key in "jiraKey".`
-    : `Jira is disabled. Set jiraKey: null. Do not attempt to create a Jira issue.`;
+    : `Jira is disabled. adapt records the work item in its own local tracker from the verdict you write below — there is no external issue to file. Set jiraKey: null and do not attempt to create one.`;
   return `You are a failure-triage analyst. A black-box run of a scenario FAILED. Decide whether this is a real,
 actionable product bug, and classify it. You may use the Chrome DevTools MCP to inspect the failing page if helpful.
 Do NOT modify any code.

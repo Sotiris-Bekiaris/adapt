@@ -24,6 +24,11 @@ describe("mcpServersFor", () => {
     expect(mcpServersFor("generator", cfg({ jira: { enabled: true } }))).toEqual(["chrome-devtools"]);
     expect(mcpServersFor("critic", cfg({ jira: { enabled: true } }))).toEqual([]);
   });
+  it("attaches no jira server under the defaults (Jira is opt-in)", () => {
+    expect(mcpServersFor("triage", cfg())).toEqual(["chrome-devtools"]);
+    expect(mcpServersFor("verification", cfg())).toEqual(["playwright"]);
+    expect(mcpServersFor("implementation", cfg())).toEqual(["chrome-devtools"]);
+  });
   it("graduation gets chrome-devtools and never jira", () => {
     expect(mcpServersFor("graduation", cfg({ jira: { enabled: true } }))).toEqual(["chrome-devtools"]);
   });

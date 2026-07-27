@@ -5,7 +5,7 @@ const base = {
   runId: "RUN-1", scenarioId: "SCN-001", scenarioTitle: "x", status: "failed", startedAt: "t", finishedAt: "t",
   appBaseUrl: "http://x", appVersion: null, environment: "local", stepsExecuted: 3, failureStep: 2,
   expectedOutcome: "home", actualOutcome: "Error TOAST  shown", consoleErrors: ["TypeError: x is undefined"],
-  networkErrors: [], screenshots: [], artifacts: [], linkedJiraIssue: null, runnerNotes: "",
+  networkErrors: [], screenshots: [], artifacts: [], runnerNotes: "",
 } as any;
 
 describe("dedupeKey", () => {

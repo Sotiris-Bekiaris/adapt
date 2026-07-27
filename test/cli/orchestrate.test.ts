@@ -14,7 +14,7 @@ function passEngine() {
     const path = s.prompt.match(/RESULT_FILE=(.+)/)![1]!.trim();
     if (s.role === "runner") {
       const sid = s.prompt.match(/SCENARIO (SCN-\d+)/)![1];
-      writeFileSync(path, JSON.stringify({ runId: "x", scenarioId: sid, scenarioTitle: sid, status: "passed", startedAt: "t", finishedAt: "t", appBaseUrl: "http://x", appVersion: null, environment: "local", stepsExecuted: 1, failureStep: null, expectedOutcome: "ok", actualOutcome: "ok", consoleErrors: [], networkErrors: [], screenshots: [], artifacts: [], linkedJiraIssue: null, runnerNotes: "" }));
+      writeFileSync(path, JSON.stringify({ runId: "x", scenarioId: sid, scenarioTitle: sid, status: "passed", startedAt: "t", finishedAt: "t", appBaseUrl: "http://x", appVersion: null, environment: "local", stepsExecuted: 1, failureStep: null, expectedOutcome: "ok", actualOutcome: "ok", consoleErrors: [], networkErrors: [], screenshots: [], artifacts: [], runnerNotes: "" }));
     }
     return [{ kind: "agent.exit", role: s.role, at: "t", exitCode: 0 }];
   }});

@@ -4,17 +4,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>adapt · mission control</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='%2389b4fa'/%3E%3C/svg%3E" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <header>
       <h1>adapt · mission control</h1>
-      <span id="status" class="disconnected">connecting…</span>
+      <!-- role="status" implies aria-live="polite": connection changes are
+           announced without interrupting, which is what a status pill wants. -->
+      <span id="status" class="disconnected" role="status">connecting…</span>
     </header>
     <main>
-      <section id="agents" class="agents"></section>
-      <aside id="timeline" class="timeline">
-        <h2>decision timeline</h2>
+      <section id="agents" class="agents" aria-label="agent event stream"></section>
+      <aside id="timeline" class="timeline" aria-labelledby="timeline-h">
+        <h2 id="timeline-h">decision timeline</h2>
         <ol id="timeline-list"></ol>
       </aside>
     </main>

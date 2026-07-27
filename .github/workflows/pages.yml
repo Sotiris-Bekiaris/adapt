@@ -1,0 +1,62 @@
+# Publishes the hand-written project page to GitHub Pages.
+#
+# Requires a one-time repo setting: Settings → Pages → "Build and deployment" → Source =
+# "GitHub Actions". Without that, this workflow's deploy step fails — Pages is not enabled
+# by default on a new repository.
+#
+# The site is assembled here, not committed: readme.html is copied in as index.html and
+# story.html keeps its name (it is reachable at /story.html; nothing on index.html links to
+# it yet). readme.html is also copied under its own name, because story.html links to it
+# relatively (story.html:647) and that link must not 404. README.md is copied for the same
+# reason (story.html:646) — served raw, but a raw file beats a 404. Both pages are
+# self-contained: inline CSS, data: URI favicon and noise texture, Google Fonts over CDN.
+# There are no local assets to carry.
+#
+# These pages are maintained by hand. README.md is the source of truth for facts; a factual
+# change there has to be mirrored into readme.html in the same PR. See CONTRIBUTING.md.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time. Do not cancel a run in progress: a half-finished deploy would
+# leave the published site in whatever state that upload got to.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp readme.html _site/index.html
+          cp readme.html _site/readme.html
+          cp story.html _site/story.html
+          cp README.md _site/README.md
+          ls -l _site
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

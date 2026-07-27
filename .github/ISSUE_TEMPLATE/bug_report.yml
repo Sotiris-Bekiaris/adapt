@@ -1,0 +1,180 @@
+name: Bug report
+description: Something in adapt behaves differently than documented, or fails.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before you paste anything: **scrub your logs.** Agent prompts, decision-log entries, and
+        console output can contain repository contents, URLs, and credentials.
+
+        For anything exploitable, do not use this form — file a private advisory instead:
+        https://github.com/Sotiris-Bekiaris/adapt/security/advisories/new
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: The actual behaviour, including the exact error text if there was one.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: If the README or a doc says otherwise, quote it and give the file and line.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: |
+        The smallest sequence that shows it. The stub engine (`engine.type: "stub"`) reproduces most
+        orchestrator, workspace, and CLI bugs with no API key and no browser — please use it if you can.
+
+        `npm run adapt` is a script in adapt's own `package.json`, so every one of those commands runs
+        from the adapt checkout, never from the target repo. The placeholder below mirrors the
+        quickstart in the README and uses absolute target paths, so it works as pasted.
+      placeholder: |
+        Run steps 3 and 6 from the adapt checkout (~/adapt below).
+
+        1. git clone https://github.com/Sotiris-Bekiaris/adapt.git ~/adapt && cd ~/adapt && npm install
+        2. mkdir /tmp/adapt-demo && git -C /tmp/adapt-demo init && git -C /tmp/adapt-demo commit --allow-empty -m init
+        3. npm run adapt -- init /tmp/adapt-demo --app-base-url http://localhost:3000
+        4. cp /tmp/adapt-demo/.adapt/config.example.json /tmp/adapt-demo/.adapt/config.json
+           then edit that file so engine.type is "stub"
+        5. cp /tmp/adapt-demo/.adapt/scenarios/examples/example.login.md /tmp/adapt-demo/.adapt/scenarios/SCN-001.md
+        6. npm run adapt -- run-scenarios /tmp/adapt-demo
+    validations:
+      required: true
+
+  - type: input
+    id: commit
+    attributes:
+      label: adapt commit SHA
+      description: "`git rev-parse --short HEAD` in your adapt checkout. There is no published version to report."
+      placeholder: cf9ba6d
+    validations:
+      required: true
+
+  - type: input
+    id: node
+    attributes:
+      label: Node version
+      description: Output of `node -v`.
+      placeholder: v22.18.0
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      placeholder: macOS 15.4 (arm64) / Ubuntu 24.04 / Windows 11
+    validations:
+      required: true
+
+  - type: dropdown
+    id: command
+    attributes:
+      label: Which command
+      options:
+        - init
+        - console
+        - run-scenarios
+        - triage-failures
+        - orchestrate
+        - evolve
+        - run
+        - baseline create / list
+        - lane create / list / start / stop / reset / destroy
+        - monitor
+        - npm install / npm test / npm run typecheck
+        - other / not command-specific
+    validations:
+      required: true
+
+  - type: dropdown
+    id: engine
+    attributes:
+      label: engine.type
+      options:
+        - stub
+        - claude-code
+        - not reached / not applicable
+    validations:
+      required: true
+
+  - type: input
+    id: model
+    attributes:
+      label: Model
+      description: "A lane's pinned model, or the ANTHROPIC_MODEL you routed Claude Code to. Leave blank for the default."
+
+  - type: dropdown
+    id: skip-permissions
+    attributes:
+      label: engine.skipPermissions
+      description: >
+        Still defaults to `true`, so agents get `--dangerously-skip-permissions` unless you set it.
+        Setting it to `false` is honoured — if it is not, that itself is a bug worth reporting.
+      options:
+        - "true (the default)"
+        - "false"
+        - not applicable
+    validations:
+      required: true
+
+  - type: dropdown
+    id: jira
+    attributes:
+      label: mcp.jira.enabled
+      description: >
+        Off by default — out of the box work-items live in `<target>/.adapt/work-items/`.
+        Set it to `true` only if you pointed adapt at a running Jira.
+      options:
+        - "false (the default)"
+        - "true"
+        - not applicable
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target
+    attributes:
+      label: Target repo
+      description: What adapt was pointed at.
+      options:
+        - a throwaway / scratch repo
+        - a real application repo
+        - a lane worktree
+        - the adapt repo itself
+    validations:
+      required: true
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant part of .adapt/config.json
+      description: The keys involved. Remove hook commands containing credentials or database URLs.
+      render: json
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Output, decision-log entries, or artifacts
+      description: |
+        Terminal output, lines from `<target>/.adapt/decision-log/<date>.ndjson`, or the run record
+        and agent sidecar from `<target>/.adapt/scenario-runs/`.
+      render: text
+
+  - type: checkboxes
+    id: scrubbed
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have removed all credentials, tokens, and private URLs from everything I pasted.
+          required: true

@@ -21,13 +21,13 @@ function spineEngine() {
     const path = s.prompt.match(/RESULT_FILE=(.+)/)![1]!.trim();
     if (s.role === "runner") {
       const sid = s.prompt.match(/SCENARIO (SCN-\d+)/)![1];
-      writeFileSync(path, JSON.stringify({ runId: "x", scenarioId: sid, scenarioTitle: sid, status: "failed", startedAt: "t", finishedAt: "t", appBaseUrl: "http://x", appVersion: null, environment: "local", stepsExecuted: 2, failureStep: 1, expectedOutcome: "ok", actualOutcome: "broken", consoleErrors: ["Err"], networkErrors: [], screenshots: [], artifacts: [], linkedJiraIssue: null, runnerNotes: "" }));
+      writeFileSync(path, JSON.stringify({ runId: "x", scenarioId: sid, scenarioTitle: sid, status: "failed", startedAt: "t", finishedAt: "t", appBaseUrl: "http://x", appVersion: null, environment: "local", stepsExecuted: 2, failureStep: 1, expectedOutcome: "ok", actualOutcome: "broken", consoleErrors: ["Err"], networkErrors: [], screenshots: [], artifacts: [], runnerNotes: "" }));
     } else if (s.role === "triage") {
       writeFileSync(path, JSON.stringify({ classification: "bug", severity: "high", title: "Fix it", isActionable: true, jiraKey: null, notes: "" }));
     } else if (s.role === "implementation") {
-      writeFileSync(path, JSON.stringify({ branch: "adapt/ITEM-001", summary: "fixed", testsPassed: true, jiraMovedTo: null }));
+      writeFileSync(path, JSON.stringify({ branch: "adapt/ITEM-001", summary: "fixed", testsPassed: true }));
     } else if (s.role === "verification") {
-      writeFileSync(path, JSON.stringify({ verified: true, status: "passed", failureStep: null, actualOutcome: null, notes: "", jiraMovedTo: null }));
+      writeFileSync(path, JSON.stringify({ verified: true, status: "passed", failureStep: null, actualOutcome: null, notes: "" }));
     }
     return [{ kind: "agent.exit", role: s.role, at: "t", exitCode: 0 }];
   }});
@@ -73,9 +73,9 @@ describe("runCycle robustness", () => {
     writeFileSync(join(c.dir, ".adapt", "scenarios", "SCN-001.md"), `---\nid: SCN-001\ntitle: Login\nstatus: ready\npriority: high\npersona: User\ntags: [a]\nsource: human-seeded\n---\nLog in.`, "utf8");
     const engine = new StubEngine({ script: (s) => {
       const path = (s.prompt.match(/RESULT_FILE=(.+)/) || [])[1]?.trim();
-      if (s.role === "runner") writeFileSync(path!, JSON.stringify({ runId: "x", scenarioId: "SCN-001", scenarioTitle: "Login", status: "passed", startedAt: "t", finishedAt: "t", appBaseUrl: "http://x", appVersion: null, environment: "local", stepsExecuted: 1, failureStep: null, expectedOutcome: "x", actualOutcome: "x", consoleErrors: [], networkErrors: [], screenshots: [], artifacts: [], linkedJiraIssue: null, runnerNotes: "" }));
-      else if (s.role === "implementation") writeFileSync(path!, JSON.stringify({ branch: "adapt/ITEM-001", summary: "fix", testsPassed: true, jiraMovedTo: null }));
-      else if (s.role === "verification") writeFileSync(path!, JSON.stringify({ verified: true, status: "passed", failureStep: null, actualOutcome: null, notes: "", jiraMovedTo: null }));
+      if (s.role === "runner") writeFileSync(path!, JSON.stringify({ runId: "x", scenarioId: "SCN-001", scenarioTitle: "Login", status: "passed", startedAt: "t", finishedAt: "t", appBaseUrl: "http://x", appVersion: null, environment: "local", stepsExecuted: 1, failureStep: null, expectedOutcome: "x", actualOutcome: "x", consoleErrors: [], networkErrors: [], screenshots: [], artifacts: [], runnerNotes: "" }));
+      else if (s.role === "implementation") writeFileSync(path!, JSON.stringify({ branch: "adapt/ITEM-001", summary: "fix", testsPassed: true }));
+      else if (s.role === "verification") writeFileSync(path!, JSON.stringify({ verified: true, status: "passed", failureStep: null, actualOutcome: null, notes: "" }));
       return [{ kind: "agent.exit", role: s.role, at: "t", exitCode: 0 }];
     }});
     const sum = await runCycle({ engine, store: c.store, config: c.config, targetRepo: c.dir, sink: () => {}, emit: () => {} });
@@ -96,7 +96,7 @@ describe("runCycle robustness", () => {
     const c = setup();
     writeFileSync(join(c.dir, ".adapt", "scenarios", "SCN-001.md"), `---\nid: SCN-001\ntitle: Login\nstatus: ready\npriority: high\npersona: User\ntags: [a]\nsource: human-seeded\n---\nLog in.`, "utf8");
     const engine = new StubEngine({ script: (s) => {
-      if (s.role === "runner") { const p = s.prompt.match(/RESULT_FILE=(.+)/)![1]!.trim(); writeFileSync(p, JSON.stringify({ runId: "x", scenarioId: "SCN-001", scenarioTitle: "Login", status: "passed", startedAt: "t", finishedAt: "t", appBaseUrl: "http://x", appVersion: null, environment: "local", stepsExecuted: 1, failureStep: null, expectedOutcome: "x", actualOutcome: "x", consoleErrors: [], networkErrors: [], screenshots: [], artifacts: [], linkedJiraIssue: null, runnerNotes: "" })); }
+      if (s.role === "runner") { const p = s.prompt.match(/RESULT_FILE=(.+)/)![1]!.trim(); writeFileSync(p, JSON.stringify({ runId: "x", scenarioId: "SCN-001", scenarioTitle: "Login", status: "passed", startedAt: "t", finishedAt: "t", appBaseUrl: "http://x", appVersion: null, environment: "local", stepsExecuted: 1, failureStep: null, expectedOutcome: "x", actualOutcome: "x", consoleErrors: [], networkErrors: [], screenshots: [], artifacts: [], runnerNotes: "" })); }
       else if (s.role === "graduation") { const p = s.prompt.match(/SPEC_FILE=(.+)/)![1]!.trim(); writeFileSync(p, `import { test } from "@playwright/test";\ntest("x", async () => {});\n`); }
       return [{ kind: "agent.exit", role: s.role, at: "t", exitCode: 0 }];
     }});

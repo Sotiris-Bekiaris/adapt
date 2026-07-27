@@ -49,7 +49,7 @@ function runnerEngine(status: string | null) {
           startedAt: "t", finishedAt: "t", appBaseUrl: "http://localhost:3000", appVersion: null,
           environment: "local", stepsExecuted: 3, failureStep: status === "failed" ? 2 : null,
           expectedOutcome: "home page", actualOutcome: status === "failed" ? "error toast" : "home page",
-          consoleErrors: [], networkErrors: [], screenshots: [], artifacts: [], linkedJiraIssue: null, runnerNotes: "ok",
+          consoleErrors: [], networkErrors: [], screenshots: [], artifacts: [], runnerNotes: "ok",
         }), "utf8");
       }
       return [{ kind: "agent.exit", role: spec.role, at: "t", exitCode: 0 }];

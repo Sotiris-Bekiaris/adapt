@@ -70,45 +70,9 @@
     "jira": {
       "type": "object",
       "properties": {
-        "enabled": {
-          "type": "boolean",
-          "default": true
-        },
-        "baseUrl": {
-          "type": "string",
-          "format": "uri",
-          "default": "http://localhost:8080"
-        },
         "projectKey": {
           "type": "string",
           "default": ""
-        },
-        "defaultIssueType": {
-          "type": "string",
-          "default": "Bug"
-        },
-        "transitions": {
-          "type": "object",
-          "properties": {
-            "inReview": {
-              "type": "string",
-              "default": "In Review"
-            },
-            "readyForVerification": {
-              "type": "string",
-              "default": "Ready for Verification"
-            },
-            "done": {
-              "type": "string",
-              "default": "Done"
-            },
-            "reopened": {
-              "type": "string",
-              "default": "In Progress"
-            }
-          },
-          "additionalProperties": false,
-          "default": {}
         }
       },
       "additionalProperties": false,
@@ -144,7 +108,7 @@
           "properties": {
             "enabled": {
               "type": "boolean",
-              "default": true
+              "default": false
             }
           },
           "additionalProperties": false,

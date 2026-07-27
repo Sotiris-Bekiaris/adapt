@@ -23,6 +23,21 @@ describe("scaffoldWorkspace", () => {
     expect(existsSync(join(dir, ".adapt", "north-star.md"))).toBe(false);
   });
 
+  it("the scaffolded config.example.json is a working local-tracker config", async () => {
+    dir = makeTmpDir();
+    scaffoldWorkspace(dir, "http://localhost:3000");
+    const example = JSON.parse(readFileSync(join(dir, ".adapt", "config.example.json"), "utf8"));
+    expect(example.mcp.jira.enabled).toBe(false);
+    expect(example.jira).toEqual({ projectKey: "" });
+    expect(example.engine.skipPermissions).toBe(true);
+
+    // Copied to config.json verbatim it must load — no Jira instance, no project key required.
+    const { writeFileSync } = await import("node:fs");
+    writeFileSync(join(dir, ".adapt", "config.json"), JSON.stringify(example), "utf8");
+    const { loadConfig } = await import("../../src/config/load.ts");
+    expect(loadConfig(dir).mcp.playwright.enabled).toBe(true);
+  });
+
   it("the scaffolded example scenario parses successfully", async () => {
     dir = makeTmpDir();
     scaffoldWorkspace(dir, "http://localhost:3000");

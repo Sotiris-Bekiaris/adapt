@@ -6,7 +6,7 @@ const record: RunRecord = {
   runId: "RUN-1", scenarioId: "SCN-001", scenarioTitle: "Login works", status: "failed",
   startedAt: "t", finishedAt: "t", appBaseUrl: "http://x", appVersion: null, environment: "local",
   stepsExecuted: 3, failureStep: 2, expectedOutcome: "home page", actualOutcome: "error toast",
-  consoleErrors: ["TypeError x"], networkErrors: [], screenshots: [], artifacts: [], linkedJiraIssue: null, runnerNotes: "",
+  consoleErrors: ["TypeError x"], networkErrors: [], screenshots: [], artifacts: [], runnerNotes: "",
 };
 
 describe("WorkItem", () => {

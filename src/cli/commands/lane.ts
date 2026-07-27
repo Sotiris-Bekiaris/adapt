@@ -41,10 +41,19 @@ export function laneListCmd(opts: { targetRepo: string }, log: (m: string) => vo
   const s = laneSettingsFromConfig(loadConfig(opts.targetRepo));
   const lanesRoot = lanesRootFor(opts.targetRepo, s.lanesRoot);
   const lanes = listLanes(lanesRoot);
-  if (lanes.length === 0) { log("(no lanes — create one with \"adapt lane create <id> --baseline <name>\")"); return { code: 0 }; }
+  if (lanes.length === 0) {
+    log(`(no lanes yet, looked in ${lanesRoot})`);
+    log(`  A lane is a git worktree forked from a baseline. Create one:`);
+    log(`    adapt lane create a ${opts.targetRepo} --baseline v1`);
+    return { code: 0 };
+  }
+  log(`  ${"LANE".padEnd(14)}${"BRANCH".padEnd(20)}${"PORTS".padEnd(9)}${"MODEL".padEnd(16)}${"BASELINE".padEnd(14)}STATUS`);
   for (const l of lanes) {
     const status = laneLoopStatus(join(lanesRoot, l.laneId));
-    log(`  ${l.laneId}\t${l.branch}\tports ${l.ports.base}+\tmodel ${l.model ?? "default"}\tbaseline ${l.baseline}\t${status}`);
+    log(
+      `  ${l.laneId.padEnd(14)}${l.branch.padEnd(20)}${`${l.ports.base}+`.padEnd(9)}` +
+      `${(l.model ?? "default").padEnd(16)}${l.baseline.padEnd(14)}${status}`,
+    );
   }
   return { code: 0 };
 }
