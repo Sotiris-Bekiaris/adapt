@@ -1,3 +1,5 @@
+![adapt — Agent Development for Autonomous Products. Scenario-driven agentic development: dream → test → repair → verify → evolve. No human in the loop, independent verification.](./docs/assets/adapt-readme-banner.png)
+
 # adapt
 
 [![CI](https://github.com/Sotiris-Bekiaris/adapt/actions/workflows/ci.yml/badge.svg)](https://github.com/Sotiris-Bekiaris/adapt/actions/workflows/ci.yml)
