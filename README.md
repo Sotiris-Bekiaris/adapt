@@ -1,7 +1,5 @@
 ![adapt — Agent Development for Autonomous Products. Scenario-driven agentic development: dream → test → repair → verify → evolve. No human in the loop, independent verification.](./docs/assets/adapt-readme-banner.png)
 
-# adapt
-
 [![CI](https://github.com/Sotiris-Bekiaris/adapt/actions/workflows/ci.yml/badge.svg)](https://github.com/Sotiris-Bekiaris/adapt/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org)
