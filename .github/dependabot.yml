@@ -13,6 +13,13 @@ updates:
     groups:
       dev-dependencies:
         dependency-type: development
+    ignore:
+      # @types/node should describe the OLDEST Node this package supports, not the
+      # newest that exists — otherwise code type-checks against APIs a supported user
+      # does not have at runtime. It tracks engines.node (>=22) by hand; bump this
+      # deliberately when the floor moves, not on Dependabot's schedule.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: "/"
