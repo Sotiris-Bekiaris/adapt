@@ -5,8 +5,10 @@
 # by default on a new repository.
 #
 # The site is assembled here, not committed: readme.html is copied in as index.html and
-# story.html keeps its name (it is reachable at /story.html; nothing on index.html links to
-# it yet). readme.html is also copied under its own name, because story.html links to it
+# story.html keeps its name — index.html links to it from the top nav and the hero CTA, both
+# relative (./story.html), so they resolve to /story.html once deployed and still work when
+# the file is opened straight off a clone. readme.html is also copied under its own name,
+# because story.html links to it
 # relatively (story.html:647) and that link must not 404. README.md is copied for the same
 # reason (story.html:646) — served raw, but a raw file beats a 404. Both pages are
 # self-contained: inline CSS, data: URI favicon and noise texture, Google Fonts over CDN.
