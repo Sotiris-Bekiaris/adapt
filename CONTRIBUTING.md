@@ -26,7 +26,7 @@ cd adapt
 npm ci
 ```
 
-- **Node 20 or 22.** CI runs both; `.nvmrc` pins 22, which is what the maintainer develops on.
+- **Node 22 or 24.** CI runs both; `.nvmrc` pins 22, which is what the maintainer develops on.
 - **No build step.** Everything runs from TypeScript through [tsx](https://github.com/privatenumber/tsx);
   `tsc` is only ever used with `--noEmit` for typechecking. There is no `dist/`.
 - **`better-sqlite3` is a native module.** `npm ci` downloads a prebuilt binary for your Node ABI, or
@@ -52,7 +52,7 @@ npm run schemas     # regenerates src/schemas/generated/*.json — must produce 
 ```
 
 `npm run check` runs the first two together locally; CI (`.github/workflows/ci.yml`) runs all three as
-separate steps on Node 20 and 22.
+separate steps on Node 22 and 24.
 
 The suite is 68 files and runs in a few seconds. If your change lowers the test count, say why in the
 PR description.

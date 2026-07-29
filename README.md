@@ -316,7 +316,7 @@ Watch every lane at once with [`adapt monitor`](#cli-reference).
 
 | Requirement | Check | Needed for |
 |---|---|---|
-| **Node 20+** and npm | `node -v` · `npm -v` | everything |
+| **Node 22+** and npm | `node -v` · `npm -v` | everything |
 | **git** | `git --version` | everything; the target must be a git repo with ≥1 commit for baselines and lanes |
 | **Claude Code CLI**, installed and signed in | `claude --version` | every agent run, including `adapt init`. Not needed with `engine.type: "stub"` |
 | **Chrome / Chromium** | `google-chrome --version` (or Chrome.app) | Chrome DevTools MCP — set `mcp.chromeDevTools.enabled: false` to skip |
@@ -617,7 +617,7 @@ Operational helpers for running adapt unattended — none of them are required t
 | `error: baseline "v1" not found (adapt-baseline/v1)` | Create it first: `adapt baseline create v1 <targetRepo>`. |
 | `error: invalid lane id "..."` | Lane ids must match `^[a-z0-9][a-z0-9-]{0,38}$`. |
 | The monitor lists lanes but shows no live events | A lane streams live only while its loop is running and serving a console port; otherwise the monitor replays that lane's decision log. Check `adapt lane list` for the loop status. |
-| `better-sqlite3` fails during `npm install` | No prebuild matched your Node. Use Node 20 or 22, or install a C++ toolchain and let it compile. |
+| `better-sqlite3` fails during `npm install` | No prebuild matched your Node. Use Node 22 or 24, or install a C++ toolchain and let it compile. |
 | The whole run does nothing and costs nothing | You are probably on `engine.type: "stub"`. That is the no-LLM mode. |
 
 ## Safeguards — the hard rules
@@ -647,7 +647,7 @@ npm run schemas     # regenerate src/schemas/generated/*.json after editing a zo
 
 CI fails if `src/schemas/generated/` is stale, so rerun `npm run schemas` and commit the result whenever you touch `src/config/schema.ts` or `src/scenarios/schema.ts`.
 
-Green means `tsc --noEmit` is clean and every test passes; `npm test` prints the current totals. Tests mirror `src/` one-to-one under `test/`, and every agent-driven test runs against `StubEngine`, never a live model — the suite needs no API key, no browser, and no network. CI runs the same gate on Node 20 and 22.
+Green means `tsc --noEmit` is clean and every test passes; `npm test` prints the current totals. Tests mirror `src/` one-to-one under `test/`, and every agent-driven test runs against `StubEngine`, never a live model — the suite needs no API key, no browser, and no network. CI runs the same gate on Node 22 and 24.
 
 ## Project status, limitations, and non-goals
 

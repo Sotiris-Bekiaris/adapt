@@ -22,7 +22,7 @@ untouched; what moved is which branch of a prompt a default run takes.
 - `docs/ARCHITECTURE.md` — the module map and the path a scenario takes through the system — plus
   `docs/README.md` and `scripts/README.md` as indexes for those two directories.
 - GitHub Actions CI (`.github/workflows/ci.yml`): typecheck, tests, and a staleness check on the
-  generated JSON Schemas, across Node 20 and 22. Dependabot for npm and Actions.
+  generated JSON Schemas, across Node 22 and 24. Dependabot for npm and Actions.
 - Issue forms (bug report, feature request) and a pull request template under `.github/`. The bug
   form's reproduction placeholder now mirrors the README quickstart with absolute paths, and the
   template chooser points questions at the issue tracker rather than at Discussions, which is off by
@@ -40,6 +40,21 @@ untouched; what moved is which branch of a prompt a default run takes.
 
 ### Changed
 
+- **Breaking: the minimum supported Node is now 22.** `engines.node` is `>=22` and CI runs the gate
+  on 22 and 24. Node 20 reached end-of-life on 2026-04-30, and the current majors of
+  `better-sqlite3` and `commander` both require `>=22`, so continuing to claim Node 20 meant
+  pinning two runtime dependencies to older majors for a runtime that no longer receives security
+  fixes. Node 20 users should upgrade to 22 or 24.
+- Dependencies brought current, clearing all seven `npm audit` advisories (1 critical, 3 high,
+  3 moderate) — every one of them in the dev toolchain. `vitest` 2 → 4, `typescript` 5 → 7,
+  `tsx` → 4.23, `commander` 12 → 15, `better-sqlite3` 11 → 13, `ws` → 8.21.1, and `js-yaml` pulled
+  to 3.15.0 under `gray-matter` (which pins the 3.x API, so 4.x was not an option). All GitHub
+  Actions moved to current majors, which also cleared the "forced to run on Node.js 24" runner
+  deprecation warning.
+- `zod` 3 → 4, and `zod-to-json-schema` is gone — zod 4 generates JSON Schema natively via
+  `z.toJSONSchema`. The generated artifacts in `src/schemas/generated/` no longer carry
+  `additionalProperties: false`: adapt's config and scenario schemas strip unknown keys rather than
+  rejecting them, so the old artifact told editors to reject input adapt actually accepts.
 - `engine.skipPermissions` is now read. It was declared in `src/config/schema.ts` with no call site,
   so setting it to `false` changed nothing; the commands that drive agents build their engine through
   `engineFor()` (`src/cli/commands/engineFor.ts`), which passes the configured value through, and
@@ -68,6 +83,7 @@ untouched; what moved is which branch of a prompt a default run takes.
   verify a Jira transition it never observes, so asking an agent to self-report one only invited
   false confidence. Existing `.adapt/scenario-runs/*.json` still parse; the field is ignored.
 - `engines.node` is now `>=20`, matching the CI matrix and the `better-sqlite3` prebuilds.
+  (Superseded later in this same unreleased pass — see the Node 22 floor above.)
 - CLI errors print as a single line and exit `1`, or `2` when the target repo is not configured;
   `--console` and `--port` reject non-integer and out-of-range values instead of binding something
   unexpected; `ADAPT_DEBUG=1` restores the stack trace.

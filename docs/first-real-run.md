@@ -39,7 +39,7 @@ Run each check. Anything that fails here becomes a confusing failure ten minutes
 
 | Need | Check | Required when |
 | --- | --- | --- |
-| **Node 20 or newer** (22 recommended) + npm | `node -v` · `npm -v` | always. `package.json` declares `engines.node >= 20`, `.nvmrc` pins 22, and CI runs the gate on 20 and 22 — stay on one of those. `better-sqlite3` ships prebuilt binaries per Node ABI, so an unusual version means `npm install` compiles it from source and needs a C++ toolchain; vitest 2 supports only `^18.0.0 \|\| >=20.0.0`; and below Node 20 npm reports `EBADENGINE` against adapt's own `engines` field. |
+| **Node 22 or newer** (22 recommended) + npm | `node -v` · `npm -v` | always. `package.json` declares `engines.node >= 22`, `.nvmrc` pins 22, and CI runs the gate on 22 and 24 — stay on one of those. `better-sqlite3` ships prebuilt binaries per Node ABI, so an unusual version means `npm install` compiles it from source and needs a C++ toolchain; and below Node 22 npm reports `EBADENGINE` against adapt's own `engines` field. Node 20 reached end-of-life on 2026-04-30 and is no longer supported. |
 | git, with a repo that has at least one commit | `git --version` · `git -C /path/to/target log -1` | always — baselines are tags, lanes are worktrees, and commits are the only undo |
 | The `claude` CLI, installed **and signed in** | `claude --version` | always, unless `engine.type` is `"stub"` |
 | Chrome or Chromium | `google-chrome --version`, or check for `/Applications/Google Chrome.app` | when `mcp.chromeDevTools.enabled` (Dreamer, Generator, Triage, Implementation, Graduation) |

@@ -27,7 +27,7 @@
   ],
   "private": true,
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "type": "module",
   "bin": {
@@ -42,8 +42,8 @@
     "schemas": "tsx src/schemas/export.ts"
   },
   "dependencies": {
-    "better-sqlite3": "^12.11.1",
-    "commander": "^14.0.3",
+    "better-sqlite3": "^13.0.2",
+    "commander": "^15.0.0",
     "gray-matter": "^4.0.3",
     "ws": "^8.21.1",
     "zod": "^4.4.3"
