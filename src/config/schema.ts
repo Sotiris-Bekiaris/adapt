@@ -14,19 +14,19 @@ export const AdaptConfigSchema = z.object({
     // Pass --dangerously-skip-permissions to Claude Code. Read by every command that builds an
     // engine (src/cli/commands/engineFor.ts); set it to false to make agents ask for permission.
     skipPermissions: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   // Live console (blueprint §11)
   console: z.object({
     port: z.number().int().positive().default(4399),
-  }).default({}),
+  }).prefault({}),
 
   // Global default DB lifecycle hooks; scenario-level hooks override (blueprint §13)
   hooks: z.object({
     setup: z.string().optional(),
     teardown: z.string().optional(),
     requireSetupHook: z.boolean().default(false),
-  }).default({}),
+  }).prefault({}),
 
   // Work tracker: Jira behind an adapter (blueprint §9–10). Opt-in: out of the box adapt uses its
   // built-in local tracker (src/tracker/localTracker.ts), which needs no external service. Turning
@@ -39,17 +39,17 @@ export const AdaptConfigSchema = z.object({
   // implementation,verification}.ts). Keys nothing reads do not belong in a schema.
   jira: z.object({
     projectKey: z.string().default(""), // Jira project agents file issues in, e.g. "ADAPT"
-  }).default({}),
+  }).prefault({}),
 
   // MCP servers exposed per role (blueprint §9)
   mcp: z.object({
-    playwright: z.object({ enabled: z.boolean().default(true) }).default({}),
-    chromeDevTools: z.object({ enabled: z.boolean().default(true) }).default({}),
+    playwright: z.object({ enabled: z.boolean().default(true) }).prefault({}),
+    chromeDevTools: z.object({ enabled: z.boolean().default(true) }).prefault({}),
     // Off by default: adapt's local tracker needs no external service. This is the single gate on
     // attaching the jira MCP server to a role (src/engine/mcp.ts) and on the Jira instructions in
     // the agent prompts (src/orchestrator/{triage,repair}.ts).
-    jira: z.object({ enabled: z.boolean().default(false) }).default({}),
-  }).default({}),
+    jira: z.object({ enabled: z.boolean().default(false) }).prefault({}),
+  }).prefault({}),
 
   // Safety limits (blueprint §14)
   limits: z.object({
@@ -60,7 +60,7 @@ export const AdaptConfigSchema = z.object({
     maxDemandsPerCycle: z.number().int().positive().default(3),
     maxScenariosPerDemand: z.number().int().positive().default(2),
     gradPassThreshold: z.number().int().positive().default(3),
-  }).default({}),
+  }).prefault({}),
 
   // Run guardrails (blueprint §14). null = infinite (default loops forever).
   run: z.object({
@@ -68,7 +68,7 @@ export const AdaptConfigSchema = z.object({
     maxWallClockSeconds: z.number().int().positive().nullable().default(null),
     pauseSeconds: z.number().int().nonnegative().default(5),
     maxConsecutiveErrors: z.number().int().positive().default(3),
-  }).default({}),
+  }).prefault({}),
 
   // Environment orchestration for lanes (Spec: baselines & lanes).
   // Optional — absent means lanes are git-only (no env bring-up/reset).
@@ -83,7 +83,7 @@ export const AdaptConfigSchema = z.object({
   // Where lane worktrees are created.
   lanes: z.object({
     rootDir: z.string().default("../adapt-lanes"),
-  }).default({}),
+  }).prefault({}),
 });
 
 export type AdaptConfig = z.infer<typeof AdaptConfigSchema>;

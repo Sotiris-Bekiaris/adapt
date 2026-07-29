@@ -1,18 +1,20 @@
 import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { zodToJsonSchema } from "zod-to-json-schema";
+import { z } from "zod";
 import { AdaptConfigSchema } from "../config/schema.ts";
 import { ScenarioMetaSchema } from "../scenarios/schema.ts";
 
 /** Build the named JSON Schema objects. Pure — returned for testing. */
 export function buildSchemas(): Record<string, any> {
-  const configSchema = zodToJsonSchema(AdaptConfigSchema, "AdaptConfig");
-  const scenarioSchema = zodToJsonSchema(ScenarioMetaSchema, "ScenarioMeta");
+  // These describe what a human writes into config.json / a scenario's frontmatter, so
+  // they are generated from the *input* side of the schema: keys with defaults have to
+  // show up as optional, not as required-with-a-value.
+  const opts = { io: "input", target: "draft-7" } as const;
 
   return {
-    "adapt-config.schema.json": configSchema.definitions?.AdaptConfig || configSchema,
-    "scenario-meta.schema.json": scenarioSchema.definitions?.ScenarioMeta || scenarioSchema,
+    "adapt-config.schema.json": z.toJSONSchema(AdaptConfigSchema, opts),
+    "scenario-meta.schema.json": z.toJSONSchema(ScenarioMetaSchema, opts),
   };
 }
 

@@ -1,4 +1,5 @@
 {
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
     "id": {
@@ -44,11 +45,11 @@
       "minLength": 1
     },
     "tags": {
+      "default": [],
       "type": "array",
       "items": {
         "type": "string"
-      },
-      "default": []
+      }
     },
     "source": {
       "type": "string",
@@ -58,6 +59,7 @@
       ]
     },
     "lastResult": {
+      "default": "unknown",
       "type": "string",
       "enum": [
         "unknown",
@@ -70,22 +72,25 @@
         "invalid",
         "inconclusive",
         "archived"
-      ],
-      "default": "unknown"
+      ]
     },
     "lastRunId": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "default": null
+      "default": null,
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "linkedIssues": {
+      "default": [],
       "type": "array",
       "items": {
         "type": "string"
-      },
-      "default": []
+      }
     },
     "hooks": {
       "type": "object",
@@ -96,8 +101,7 @@
         "teardown": {
           "type": "string"
         }
-      },
-      "additionalProperties": false
+      }
     }
   },
   "required": [
@@ -107,6 +111,5 @@
     "priority",
     "persona",
     "source"
-  ],
-  "additionalProperties": false
+  ]
 }

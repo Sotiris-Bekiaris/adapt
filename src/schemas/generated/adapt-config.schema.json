@@ -1,4 +1,5 @@
 {
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
     "targetRepoPath": {
@@ -10,47 +11,47 @@
       "format": "uri"
     },
     "playwrightTestDir": {
-      "type": "string",
-      "default": "tests/adapt"
+      "default": "tests/adapt",
+      "type": "string"
     },
     "startCommand": {
       "type": "string"
     },
     "engine": {
+      "default": {},
       "type": "object",
       "properties": {
         "type": {
+          "default": "claude-code",
           "type": "string",
           "enum": [
             "claude-code",
             "stub"
-          ],
-          "default": "claude-code"
+          ]
         },
         "command": {
           "type": "string"
         },
         "skipPermissions": {
-          "type": "boolean",
-          "default": true
+          "default": true,
+          "type": "boolean"
         }
-      },
-      "additionalProperties": false,
-      "default": {}
+      }
     },
     "console": {
+      "default": {},
       "type": "object",
       "properties": {
         "port": {
+          "default": 4399,
           "type": "integer",
           "exclusiveMinimum": 0,
-          "default": 4399
+          "maximum": 9007199254740991
         }
-      },
-      "additionalProperties": false,
-      "default": {}
+      }
     },
     "hooks": {
+      "default": {},
       "type": "object",
       "properties": {
         "setup": {
@@ -60,146 +61,148 @@
           "type": "string"
         },
         "requireSetupHook": {
-          "type": "boolean",
-          "default": false
+          "default": false,
+          "type": "boolean"
         }
-      },
-      "additionalProperties": false,
-      "default": {}
+      }
     },
     "jira": {
+      "default": {},
       "type": "object",
       "properties": {
         "projectKey": {
-          "type": "string",
-          "default": ""
+          "default": "",
+          "type": "string"
         }
-      },
-      "additionalProperties": false,
-      "default": {}
+      }
     },
     "mcp": {
+      "default": {},
       "type": "object",
       "properties": {
         "playwright": {
+          "default": {},
           "type": "object",
           "properties": {
             "enabled": {
-              "type": "boolean",
-              "default": true
+              "default": true,
+              "type": "boolean"
             }
-          },
-          "additionalProperties": false,
-          "default": {}
+          }
         },
         "chromeDevTools": {
+          "default": {},
           "type": "object",
           "properties": {
             "enabled": {
-              "type": "boolean",
-              "default": true
+              "default": true,
+              "type": "boolean"
             }
-          },
-          "additionalProperties": false,
-          "default": {}
+          }
         },
         "jira": {
+          "default": {},
           "type": "object",
           "properties": {
             "enabled": {
-              "type": "boolean",
-              "default": false
+              "default": false,
+              "type": "boolean"
             }
-          },
-          "additionalProperties": false,
-          "default": {}
+          }
         }
-      },
-      "additionalProperties": false,
-      "default": {}
+      }
     },
     "limits": {
+      "default": {},
       "type": "object",
       "properties": {
         "maxFixAttempts": {
+          "default": 2,
           "type": "integer",
           "exclusiveMinimum": 0,
-          "default": 2
+          "maximum": 9007199254740991
         },
         "maxVerificationAttempts": {
+          "default": 3,
           "type": "integer",
           "exclusiveMinimum": 0,
-          "default": 3
+          "maximum": 9007199254740991
         },
         "maxItemsPerRun": {
+          "default": 10,
           "type": "integer",
           "exclusiveMinimum": 0,
-          "default": 10
+          "maximum": 9007199254740991
         },
         "maxCycleSeconds": {
+          "default": 3600,
           "type": "integer",
           "exclusiveMinimum": 0,
-          "default": 3600
+          "maximum": 9007199254740991
         },
         "maxDemandsPerCycle": {
+          "default": 3,
           "type": "integer",
           "exclusiveMinimum": 0,
-          "default": 3
+          "maximum": 9007199254740991
         },
         "maxScenariosPerDemand": {
+          "default": 2,
           "type": "integer",
           "exclusiveMinimum": 0,
-          "default": 2
+          "maximum": 9007199254740991
         },
         "gradPassThreshold": {
+          "default": 3,
           "type": "integer",
           "exclusiveMinimum": 0,
-          "default": 3
+          "maximum": 9007199254740991
         }
-      },
-      "additionalProperties": false,
-      "default": {}
+      }
     },
     "run": {
+      "default": {},
       "type": "object",
       "properties": {
         "maxCycles": {
+          "default": null,
           "anyOf": [
             {
               "type": "integer",
-              "exclusiveMinimum": 0
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
             },
             {
               "type": "null"
             }
-          ],
-          "default": null
+          ]
         },
         "maxWallClockSeconds": {
+          "default": null,
           "anyOf": [
             {
               "type": "integer",
-              "exclusiveMinimum": 0
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
             },
             {
               "type": "null"
             }
-          ],
-          "default": null
+          ]
         },
         "pauseSeconds": {
+          "default": 5,
           "type": "integer",
           "minimum": 0,
-          "default": 5
+          "maximum": 9007199254740991
         },
         "maxConsecutiveErrors": {
+          "default": 3,
           "type": "integer",
           "exclusiveMinimum": 0,
-          "default": 3
+          "maximum": 9007199254740991
         }
-      },
-      "additionalProperties": false,
-      "default": {}
+      }
     },
     "environment": {
       "type": "object",
@@ -214,33 +217,32 @@
           "type": "string"
         },
         "portBase": {
+          "default": 54300,
           "type": "integer",
           "exclusiveMinimum": 0,
-          "default": 54300
+          "maximum": 9007199254740991
         },
         "portStride": {
+          "default": 100,
           "type": "integer",
           "exclusiveMinimum": 0,
-          "default": 100
+          "maximum": 9007199254740991
         }
-      },
-      "additionalProperties": false
+      }
     },
     "lanes": {
+      "default": {},
       "type": "object",
       "properties": {
         "rootDir": {
-          "type": "string",
-          "default": "../adapt-lanes"
+          "default": "../adapt-lanes",
+          "type": "string"
         }
-      },
-      "additionalProperties": false,
-      "default": {}
+      }
     }
   },
   "required": [
     "targetRepoPath",
     "appBaseUrl"
-  ],
-  "additionalProperties": false
+  ]
 }

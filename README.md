@@ -12,7 +12,7 @@ Point adapt at *your* product repository. A team of cooperating coding agents dr
 
 There is no "done" and no success state. **Success *is* the continued evolution of the product.** The human is the observer outside the loop, never an approver inside it. The methodology has a name: **Scenario-Driven Agentic Development (SDAD)**.
 
-> 📖 Prefer to *watch* how it works? [`story.html`](./story.html) is an interactive, scroll-driven walkthrough of the whole loop. Clone the repo and open it in a browser — GitHub renders `.html` files as source.
+> 📖 Prefer to *watch* how it works? **[Watch the loop →](https://sotiris-bekiaris.github.io/adapt/story.html)** is an interactive, scroll-driven walkthrough of the whole loop, hosted on GitHub Pages — nothing to clone or install. The project page lives at **[sotiris-bekiaris.github.io/adapt](https://sotiris-bekiaris.github.io/adapt/)**. (The source of both is [`story.html`](./story.html) and [`readme.html`](./readme.html); GitHub renders `.html` files as source, so use the hosted links to actually view them.)
 
 ---
 
@@ -139,8 +139,8 @@ ls  /tmp/adapt-demo/.adapt/decision-log/          # <YYYY-MM-DD>.ndjson — the 
 
 | Document | What it is |
 |---|---|
-| [`story.html`](./story.html) | Interactive, scroll-driven walkthrough of the loop. Open it in a browser. |
-| [`readme.html`](./readme.html) | The project page published to GitHub Pages. It is a presentation layer — **this README is the canonical source of truth**; where the two differ, believe the README, and believe `src/` over both. |
+| [`story.html`](./story.html) → [**view it live**](https://sotiris-bekiaris.github.io/adapt/story.html) | Interactive, scroll-driven walkthrough of the loop. |
+| [`readme.html`](./readme.html) → [**view it live**](https://sotiris-bekiaris.github.io/adapt/) | The project page published to GitHub Pages (deployed as `index.html`). It is a presentation layer — **this README is the canonical source of truth**; where the two differ, believe the README, and believe `src/` over both. |
 | [docs/README.md](./docs/README.md) | Index of everything under `docs/`, current and historical. |
 | [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | The map of the codebase — read it before changing code. |
 | [docs/first-real-run.md](./docs/first-real-run.md) | Runbook for pointing adapt at a real product with a real model. |
@@ -304,7 +304,7 @@ Watch every lane at once with [`adapt monitor`](#cli-reference).
 
 ## Tech stack
 
-- **adapt itself:** Node + TypeScript (ESM), run via `tsx`. Runtime deps: `commander` (CLI), `zod` (config + artifact schemas), `better-sqlite3` (orchestrator state store), `ws` (console/monitor streams), `gray-matter` (scenario frontmatter), `zod-to-json-schema` (exported JSON Schema).
+- **adapt itself:** Node + TypeScript (ESM), run via `tsx`. Runtime deps: `commander` (CLI), `zod` (config + artifact schemas, and the exported JSON Schema via `z.toJSONSchema`), `better-sqlite3` (orchestrator state store), `ws` (console/monitor streams), `gray-matter` (scenario frontmatter).
 - **Black-box surface** (Runner, Verification): **Playwright MCP** (`@playwright/mcp`, launched with `--isolated` so browser state never leaks between scenarios).
 - **White-box surface** (Dreamer, Generator, Triage, Implementation, Graduation): **Chrome DevTools MCP** (`chrome-devtools-mcp`).
 - **Agent engine:** **Claude Code, headless** — streaming structured output feeds the live console. A deterministic `stub` engine (`engine.type: "stub"`) drives the same pipeline with no LLM.
