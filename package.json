@@ -42,7 +42,7 @@
     "schemas": "tsx src/schemas/export.ts"
   },
   "dependencies": {
-    "better-sqlite3": "^13.0.2",
+    "better-sqlite3": "^13.0.3",
     "commander": "^15.0.0",
     "gray-matter": "^4.0.3",
     "ws": "^8.21.1",
